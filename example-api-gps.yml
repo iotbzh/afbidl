@@ -1,0 +1,156 @@
+%YAML 1.3
+---
+afbidl: "0.1"
+
+info:
+  apiname: gps
+  title: Service for geolocation
+  description:
+        GPS service reports current WGS84 coordinates from GNSS devices
+        via the gpsd application.
+  version: "0.1"
+  author: AGL
+  maintainer: Scott Rifenbark
+  homepage: https://doc.automotivelinux.org/...
+
+tools:
+
+    afb-genskel:
+        scope: static
+        prefix: req_
+        postfix: _cb
+        init: init_gps
+
+    doc:
+        id: gps-api
+        keywords: gps
+        author:
+        version:
+        src_prefix: api-gps
+        chapters:
+        - name: Abstract
+          url: abstract.md
+        - name: User Guide
+          url: userguide.md
+
+verbs:
+
+    subscribe:
+        description: subscribe to gps/gnss events
+        request: $/schemas/subscription-desc
+        reply:
+            success:
+                schema: $/schemas/none
+                set-state:
+                    listening: yes
+
+    unsubscribe:
+        description: unsubscribe to gps/gnss events
+        request: $/schemas/subscription-desc
+        reply:
+            success:
+                schema: $/schemas/none
+                set-state:
+                    listening: no
+
+    location:
+        description: get current gps/gnss coordinates
+        request: $/schemas/none
+        reply:
+            success: $/schemas/location
+            _: An error can be returned when the service isn't ready
+
+    record:
+        description: |
+            Entering *record* mode you must send **{"state": "on"}** with the **record**
+            verb which will have a JSON response of **{"filename": "gps_YYYYMMDD_hhmm.log"}**
+            pointing to log under *app-data/agl-service-gps*
+
+            Now to enter *replaying* mode you must symlink or copy a GPS dump to
+            *app-data/agl-service-gps/recording.log* and restart the service.
+            From then on out the previously recorded GPS data will loop infinitely
+            which is useful for testing or demonstration purposes.
+        request: $/schemas/record/request
+        reply:
+            success:
+                schema: $/schemas/record/reply
+                set-state:
+                    recording: yes
+            _: An error can be returned when the service isn't ready
+
+events:
+    location:
+        schema: $/schemas/location
+        when-state:
+            listening: yes
+
+state-machines:
+    listening:
+        states: [ no, yes ]
+        initial: no
+    recording:
+        states: [ no, yes ]
+        initial: no
+
+# Follow JsonSchema specification (https://json-schema.org/)
+schemas:
+    subscription-desc:
+        title: Description of the event subscribed or unsubscribed
+        type: object
+        properties:
+            value: { enum: [ location ] }
+        required: [ value ]
+
+    location:
+        title: the location
+        type: object
+        properties:
+            altitude:
+                title: the altitude in meters above the normal geoide
+                type: number
+                minimum: -20000
+                maximum: 20000
+            latitude:
+                title: the latitude in degrees
+                type: number
+                minimum: -90
+                maximum: 90
+            longitude:
+                title: the longitude in degrees
+                type: number
+                minimum: -180
+                maximum: 180
+            speed:
+                title: the speed in meter per seconds m/s
+                type: number
+                minimum: 0
+                maximum: 6000
+            track:
+                title: the heading in degrees
+                type: number
+                minimum: 0
+                maximum: 360
+            timestamp:
+                title: time stamp of the location as a ISO8601 date
+                type: string #ISO8601
+                pattern: \d{4,}-[01][0-9]-[0-3][0-9]T[012][0-9]:[0-5][0-9]:[0-5][0-9].*
+
+    record:
+        request:
+            type: object
+            properties:
+                state: { const: "on" }
+            required: [ state ]
+
+        reply:
+            type: object
+            properties:
+                filename:
+                    title: the name of the file that records the data of format gps_YYYYMMDD_hhmm.log
+                    type: string
+                    pattern: gps_\d{4}\d{2}\d{2}_\d{2}\d{2}.log
+            required: [ filename ]
+
+    none:
+        title: no value, just null
+        const: null

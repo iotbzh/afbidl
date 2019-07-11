@@ -1,0 +1,294 @@
+{
+  "afbidl": "0.1",
+  "info": {
+    "apiname": "monitor",
+    "description": "monitoring of bindings and internals",
+    "title": "monitor",
+    "version": "1.0"
+  },
+  "tools": {
+    "genskel": {
+      "version": 2,
+      "prefix": "f_",
+      "postfix": "",
+      "preinit": null,
+      "init": null,
+      "onevent": null,
+      "scope": "static",
+      "private": true
+    }
+  },
+  "verbs": {
+    "get": {
+      "description": "Get monitoring data.",
+      "permissions": { "session": "check" },
+      "request": { "$ref": "#/schemas/get-request" },
+      "reply": { "$ref": "#/schemas/get-reply" }
+    },
+    "set": {
+      "description": "Set monitoring actions.",
+      "permissions": { "session": "check" },
+      "request": { "$ref": "#/schemas/set-request" },
+      "reply": { "$ref": "#/schemas/any" }
+    },
+    "trace": {
+      "description": "Set monitoring actions.",
+      "permissions": { "session": "check" },
+      "request": { "$ref": "#/schemas/trace-request" },
+      "reply": { "$ref": "#/schemas/any" }
+    },
+    "session": {
+      "description": "describes the session.",
+      "permissions": { "session": "check" },
+      "request": { "$ref": "#/schemas/session-request" },
+      "reply": { "$ref": "#/schemas/any" }
+    }
+  },
+  "schemas": {
+    "any": {
+      "title": "Any value",
+      "type": [ "null", "boolean", "object", "array", "number", "string" ]
+    },
+    "set-request": {
+      "type": "object",
+      "properties": {
+        "verbosity": { "$ref": "#/schemas/set-verbosity" }
+      }
+    },
+    "set-verbosity": {
+      "anyOf": [
+        { "$ref": "#/schemas/verbosity-map" },
+        { "$ref": "#/schemas/verbosity-level" }
+      ]
+    },
+    "get-request": {
+      "type": "object",
+      "properties": {
+        "verbosity": { "$ref": "#/schemas/get-verbosity" },
+        "apis": { "$ref": "#/schemas/get-apis" }
+      }
+    },
+    "get-reply": {
+      "type": "object",
+      "properties": {
+        "verbosity": { "$ref": "#/schemas/verbosity-map" },
+        "apis": { "type": "object" }
+      }
+    },
+    "get-verbosity": {
+      "anyOf": [
+        { "type": "boolean" },
+        { "type": "array", "items": { "type": "string" } },
+        { "type": "object" }
+      ]
+    },
+    "get-apis": {
+      "anyOf": [
+        { "type": "boolean" },
+        { "type": "array", "items": { "type": "string" } },
+        { "type": "object" }
+      ]
+    },
+    "verbosity-map": {
+      "type": "object",
+      "patternProperties": { "^.*$": { "$ref": "#/schemas/verbosity-level" } }
+    },
+    "verbosity-level": {
+      "enum": [ "debug", 3, "info", 2, "notice", "warning", 1, "error", 0 ]
+    },
+    "trace-request": {
+      "type": "object",
+      "properties": {
+        "add": { "$ref": "#/schemas/trace-add" },
+        "drop": { "$ref": "#/schemas/trace-drop" }
+      }
+    },
+    "trace-add": {
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/schemas/trace-add-object" } },
+        { "$ref": "#/schemas/trace-add-any" }
+      ]
+    },
+    "trace-add-any": {
+      "anyOf": [
+        { "$ref": "#/schemas/trace-add-request" },
+        { "$ref": "#/schemas/trace-add-object" }
+      ]
+    },
+    "trace-add-object": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "name of the generated event", "default": "trace" },
+        "tag": { "type": "string", "description": "tag for grouping traces", "default": "trace" },
+        "api": { "type": "string", "description": "api for requests, daemons and services" },
+        "verb": { "type": "string", "description": "verb for requests" },
+        "uuid": { "type": "string", "description": "uuid of session for requests" },
+        "pattern": { "type": "string", "description": "pattern for events" },
+        "request": { "$ref": "#/schemas/trace-add-request" },
+        "daemon": { "$ref": "#/schemas/trace-add-daemon" },
+        "service": { "$ref": "#/schemas/trace-add-service" },
+        "event": { "$ref": "#/schemas/trace-add-event" },
+        "session": { "$ref": "#/schemas/trace-add-session" },
+        "for": { "$ref": "#/schemas/trace-add" }
+      },
+      "examples": [
+        { "tag": "1", "for": [ "common", { "api": "xxx", "request": "*", "daemon": "*", "service": "*" } ] }
+      ]
+    },
+    "trace-add-request": {
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/schemas/trace-request-names" } },
+        { "$ref": "#/schemas/trace-request-names" }
+      ]
+    },
+    "trace-request-names": {
+      "title": "name of traceable items of requests",
+      "enum": [
+        "*",
+        "addref",
+        "all",
+        "args",
+        "begin",
+        "common",
+        "context",
+        "context_get",
+        "context_set",
+        "end",
+        "event",
+        "extra",
+        "get",
+        "json",
+        "life",
+        "ref",
+        "reply",
+        "result",
+        "session",
+        "session_close",
+        "session_set_LOA",
+        "simple",
+        "store",
+        "stores",
+        "subcall",
+        "subcall_result",
+        "subcalls",
+        "subcallsync",
+        "subcallsync_result",
+        "subscribe",
+        "unref",
+        "unstore",
+        "unsubscribe",
+        "vverbose"
+      ]
+    },
+    "trace-add-daemon": {
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/schemas/trace-daemon-names" } },
+        { "$ref": "#/schemas/trace-daemon-names" }
+      ]
+    },
+    "trace-daemon-names": {
+      "title": "name of traceable items of daemons",
+      "enum": [
+        "*",
+        "all",
+        "common",
+        "event_broadcast_after",
+        "event_broadcast_before",
+        "event_make",
+        "extra",
+        "get_event_loop",
+        "get_system_bus",
+        "get_user_bus",
+        "queue_job",
+        "require_api",
+        "require_api_result",
+        "rootdir_get_fd",
+        "rootdir_open_locale",
+        "unstore_req",
+        "vverbose"
+      ]
+    },
+    "trace-add-service": {
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/schemas/trace-service-names" } },
+        { "$ref": "#/schemas/trace-service-names" }
+      ]
+    },
+    "trace-service-names": {
+      "title": "name of traceable items of services",
+      "enum": [
+        "*",
+        "all",
+        "call",
+        "call_result",
+        "callsync",
+        "callsync_result",
+        "on_event_after",
+        "on_event_before",
+        "start_after",
+        "start_before"
+      ]
+    },
+    "trace-add-event": {
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/schemas/trace-event-names" } },
+        { "$ref": "#/schemas/trace-event-names" }
+      ]
+    },
+    "trace-event-names": {
+      "title": "name of traceable items of events",
+      "enum": [
+        "*",
+        "all",
+        "broadcast_after",
+        "broadcast_before",
+        "common",
+        "create",
+        "drop",
+        "extra",
+        "name",
+        "push_after",
+        "push_before"
+      ]
+    },
+    "trace-add-session": {
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/schemas/trace-session-names" } },
+        { "$ref": "#/schemas/trace-session-names" }
+      ]
+    },
+    "trace-session-names": {
+      "title": "name of traceable items for sessions",
+      "enum": [
+        "*",
+        "addref",
+        "all",
+        "close",
+        "common",
+        "create",
+        "destroy",
+        "renew",
+        "unref"
+      ]
+    },
+    "trace-drop": {
+      "anyOf": [
+        { "type": "boolean" },
+        {
+          "type": "object",
+          "properties": {
+            "event": { "anyOf": [  { "type": "string" }, { "type": "array", "items": "string" } ] },
+            "tag": { "anyOf": [  { "type": "string" }, { "type": "array", "items": "string" } ] },
+            "uuid": { "anyOf": [  { "type": "string" }, { "type": "array", "items": "string" } ] }
+          }
+        }
+      ]
+    },
+    "session-request": {
+      "type": "object",
+      "properties": {
+        "refresh-token": { "type": "boolean" }
+      }
+    }
+  }
+}
