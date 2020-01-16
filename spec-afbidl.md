@@ -1,96 +1,93 @@
-API specification for AGL
-=========================
+# API specification for AGL
 
 Micro service architectures on web mostly use OpenAPI
 for specifying and documenting their API (Application
-Programming Interface).
+Programming Interface).\
 Following that use, AGL's binder provides a tool to
 translate OpenAPI specifications to a code skeleton
 written either in C or C++ languages.
 
-However, the API descritpion language OpenAPI never
+However, the API description language OpenAPI never
 provided some the requirement that AGL expected for
 a such tool:
 
- - specify API that throws events
- - describe the permission based security model
+- Specify API that throws events
+- Describe the permission based security model
 
-Using OpenAPI also had the disavantage of implying
-some twist of the model and then some uglyness
+Using OpenAPI also had the disadvantage of implying
+some twist of the model and then some ugliness
 verbosity.
 
 Unfortunately, search for a replacement of OpenAPI
 that would fullfil below requirements failed.
 
- - Describe JSON data of APIs
- - Describe events
- - Describe permission based security (even as extension)
- - Suitable for generating:
-    * Documentation
-    * Code skeleton with/without parameter validation
-    * Automated test
+- Describe JSON data of APIs
+- Describe events
+- Describe permission based security (even as extension)
+- Suitable for generating:
+  - Documentation
+  - Code skeleton with/without parameter validation
+  - Automated test
 
 Consequently, a new API specification formalism has
 to be proposed.
 
-This document is the proposal for that new formalism.
+This document is the proposal for that new formalism.\
 For the best, that proposal includes advanced designs
 introduced after discussions with Joël Champeau and
 Philippe Dhaussy, researchers at ENSTA Bretagne (National
 Institute of Advanced Technologies of Brittany) specialized
 in system modeling and formal verification.
 
-
-The goals of specifying APIs
-----------------------------
+## The goals of specifying APIs
 
 The micro service architecture of AGL and its flexible
 IPC mechanism emphasis the decomposition of services or
-applications in tiny cooperative parts.
+applications in tiny cooperative parts.\
 This has big advantages in terms of flexibility and
 development process but, conversely, implies to
-correctly document interfaces.
+correctly document interfaces.\
 Documenting or specifying API are the same thing, except
-that, traditionnaly, specifying comes forward and
+that, traditionally, specifying comes forward and
 documenting afterward.
 
-Specifying API can be done using simple text documents.
+Specifying API can be done using simple text documents.\
 Using text documents is great for humans but not for
-computers.
+computers.\
 For this reason, because machines can't exploit human
 structured texts, the use of simple text documents
-should be avoided as much as possible.
+should be avoided as much as possible.\
 In effect, here is the list of all items that computers
 can do based on API specifications:
 
- - Automatic generation of documentation
+- Automatic generation of documentation
    in many formats and using customizable styles
 
- - Automatic generation of code either
+- Automatic generation of code either
    minimal or elaborate
 
- - Automatic adaptation to tansport backend or
+- Automatic adaptation to transport backend or
    protocol
 
- - Automatic generation of test cases
+- Automatic generation of test cases
 
- - Integration of advanced tools like supervision,
+- Integration of advanced tools like supervision,
    tracing, spying
 
- - Proof of system properties, in particular
+- Proof of system properties, in particular
    when assembling many API together
 
 Many IDL (Interface Description Language) exist
-but it rarely fit all that requirements.
+but it rarely fit all that requirements.\
 First of all, they generally are "languages",
 meaning that they are difficult to parse, to
 generate and to manipulate by tools.
 
-OpenAPI is not a language. It is a specification
-made by a data structure of JSON format [1][json-org],
-[2][json-rfc].
+OpenAPI is not a language.\
+It is a specification made by a data structure
+ of JSON format [1][json-org],[2][json-rfc].\
 Using JSON has the advantage that no parser has
-to be written because a standard one exists.
+to be written because a standard one exists.\
 JSON is not human friendly but its data model
 is quasi-isomorph with the one of YAML [3][yaml]
 that is more human friendly.
@@ -100,7 +97,8 @@ an API specification format based on YAML.
 
 Nevertheless, for specifying the values expected
 by APIs the format will use the JSON Schema formalism
-[4][json-schema]. This allows to describe complex
+[4][json-schema].\
+This allows to describe complex
 values and their constraints using a format easy to
 integrate in tools.
 
@@ -109,8 +107,7 @@ integrate in tools.
 [yaml]:        https://yaml.org/                   "YAML format"
 [json-schema]: https://json-schema.org/            "JSON Schema"
 
-Content of API specifications
------------------------------
+## Content of API specifications
 
 ### Top level structure
 
@@ -129,7 +126,7 @@ examples: # examples of usage with or without timings
 schemas: # place holder for description of the types of items
 ```
 
-The specification is designed to describe only one API.
+The specification is designed to describe only one API.\
 If needed (example: simulation of a complex system), the aggregation
 of multiple API descriptions can be done but externally with some
 other description.
@@ -138,41 +135,46 @@ The heading line *%YAML 1.3* is recommended but not mandatory.
 
 The main item of the description is an object. Its fields are:
 
- - afbidl: this field indicates that the description follows that
+- afbidl: this field indicates that the description follows that
    specification and the value precise what version of the specification
    is used. Current version is 0.1
 
- - info: this field contains an object that give informations about the
+- info: this field contains an object that give information about the
    API. Its mandatory fields are:
 
-      - apiname: name of the API
-      - title: short explanation of the API
-      - description: long description of the API
-      - version: version of the API
+  - apiname: name of the API
+  - title: short explanation of the API
+  - description: long description of the API
+  - version: version of the API
 
-   Other fields are accepted, example: author, maintainer, homepage,
-   site, copyright, license, ...
+   Other fields are accepted, example:
+  - author
+  - maintainer
+  - homepage
+  - site
+  - copyright
+  - license
+  - ...
 
- - tools: this fields contains an object that can set properties for
+- tools: this fields contains an object that can set properties for
    processing tools. The fields are the names of tool to setup.
 
- - verbs: this field contains an object whose fields are the names
+- verbs: this field contains an object whose fields are the names
    of the verbs of the API. For each verb the value attached to the
    field of the verb is the description of the verb.
 
- - events: this field contains an object whose fields are the names
+- events: this field contains an object whose fields are the names
    of the events thrown by the API. For each event the value attached
    to the field describes the event.
 
- - state-machines: this field contains an object whose fields are the
+- state-machines: this field contains an object whose fields are the
    names of the state-machines of the API. For each state-machine the
    value attached to the field describes the state machine.
 
- - examples: TO BE SPECIFIED - object of named sequences/scenarii -
+- examples: TO BE SPECIFIED - object of named sequences/scenarios -
 
- - schemas: this optionnal field is intended to group the schema of
+- schemas: this optional field is intended to group the schema of
    the common types used by API.
-
 
 ### Describing verbs
 
@@ -192,17 +194,13 @@ The events are described using an object containing the fields
 
 ```yaml
 schema: # description of the data associated with the event
-when-state: # condition of emiting the event
+when-state: # condition of emitting the event
 set-state: # when the event is associated to a state change
 ```
 
 ### Describing state machine
 
-
-
-
-Example of the API gps
-----------------------
+#### Example of the API gps
 
 ```yaml
 %YAML 1.3
@@ -211,7 +209,7 @@ afbidl: "0.1"
 
 info:
   apiname: gps
-  title: Service for geolocation
+  title: Service for geo location
   description:
         GPS service reports current WGS84 coordinates from GNSS devices
         via the gpsd application.
@@ -313,7 +311,7 @@ schemas:
         type: object
         properties:
             altitude:
-                title: the altitude in meters above the normal geoide
+                title: the altitude in meters above the normal geoid
                 type: number
                 minimum: -20000
                 maximum: 20000
@@ -362,4 +360,3 @@ schemas:
         title: no value, just null
         const: null
 ```
-
