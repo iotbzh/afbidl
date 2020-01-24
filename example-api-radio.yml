@@ -1,0 +1,286 @@
+%YAML 1.3
+---
+afbidl: "0.1"
+
+info:
+  apiname: radio
+  title: Service for radio reception
+  description:
+        Radio service manages and reports radio configuration changes
+        (eg. frequency, band, ....) and allows requesting infos (RDS,...)
+  version: "0.1"
+  author: AGL
+  maintainer: Matt Ranostay	(Konsulko)
+  homepage: https://gerrit.automotivelinux.org/gerrit/apps/agl-service-radio
+
+tools:
+
+    afb-genskel:
+        scope: static
+        prefix: req_
+        postfix: _cb
+        init: init
+
+    #doc:
+        #id: radio-api
+        #keywords: radio
+        #author:
+        #version:
+        #src_prefix: api-radio
+        #chapters:
+        #- name: Abstract
+          #url: abstract.md
+        #- name: User Guide
+          #url: userguide.md
+
+
+verbs:
+
+    frequency:
+        description: Get/Set frequency
+        request: $/schemas/frequency/set
+        reply:
+            success: $/schemas/frequency/get
+            failure: $/schemas/none
+
+    band:
+        description: Set/Get band
+        request: $/schemas/band/set
+        reply:
+            success:
+                schema: $/schemas/band/get
+            _: fails if the band is invalid
+
+    rds:
+        description: Get RDS information
+        request: $/schemas/none
+        reply:
+            success: $/schemas/rds/replay
+            _: may fail if not supported by the radio backend
+
+    band_supported:
+        description: Check band support
+        request: $/schemas/band/request
+        reply:
+            success: $/schemas/band/supported_bands
+            _: dickhead !!! faceplam... fails if the band is invalid
+
+    frequency_range:
+        description: Get frequency range (given a modulation)
+        request: $/schemas/band/request
+        reply:
+            success: $/schemas/frequency/range
+            _: fails if modulation is unknown.
+
+    frequency_step:
+        description: Get frequency step
+        request: $/schemas/band/request
+        reply: $/schemas/frequency/step
+
+    start:
+        description: Start radio playback
+        request: $/schemas/none
+        reply: $/schemas/start/reply
+
+    stop:
+        description: Stop radio playback
+        request: $/schemas/none
+        reply: $/schemas/stop/reply
+
+    scan_start:
+        description: Start station scan
+        request: $/schemas/start_scan
+        reply:
+            success:
+                when-state:
+                    scanning: idle
+                triggers: scan-start
+                schema: $/schemas/none
+            _: Fail if direction is invalid
+
+    stop_scan:
+        description: Stop station scan
+        request: $/schemas/none
+        reply:
+            triggers: scan-stop
+            schema: $/schemas/none
+
+
+    stereo_mode:
+        description: Set/Get stereo_mode
+        request: $/schemas/stereo_mode
+        reply:
+            success:
+                schema: $/schemas/stereo_mode
+            _: fails if passed an invalid stereo mode
+
+
+    subscribe:
+        description: Subscribe for an event
+        request: $/schemas/subscribe/subscription
+        reply:
+            schema: $/schemas/none
+            triggers: start-listening
+
+    unsubscribe:
+        description: Unsubscribe for an event
+        request: $/schemas/subscribe/subscription
+        reply:
+            schema: $/schemas/none
+            triggers: stop-listening
+
+
+state-machines:
+    scanning:
+        states: [ idle, progress ]
+        initial: idle
+        transitions:
+            #- [ idle, progress, scan-start ]
+            #- [ progress, idle, scan-complete ]
+            - {name: scan-start-transition,
+                     from: idle,
+                     to: progress,
+                     trigged-by: start-scan }
+            - {name: scan-stop-transition,
+                     from: idle,
+                     to: progress,
+                     trigged-by: stop-scan }
+
+    listening:
+        states:
+            - on
+            - off
+        initial: on
+        transitions:
+            - [on, off, start-listening ]
+            - [off, on, stop-listening ]
+
+
+events:
+    frequency:
+        schema: $/schemas/location
+        when-state:
+            listening: on
+    station_found:
+        schema: $/schemas/location
+        when-state:
+            listening: on
+            scanning: progress
+    status:
+        schema: $/schemas/location
+        when-state:
+            listening: on
+
+
+# Follow JsonSchema specification (https://json-schema.org/)
+schemas:
+    types:
+        band:
+            title: Frequency band (modulation)
+            type: string
+            enum: ["AM", "FM"]
+
+        stereo_mode:
+            title: Stereo mode
+            type: string
+            enum: ["mono", "stereo"]
+
+    frequency:
+        set:
+            type: object
+            properties:
+                value:
+                    title: frequency value
+                    type: number
+            required: [ value ]
+
+        get:
+            type: object
+            properties:
+                frequency:
+                    title: frequency value
+                    type: number
+            required: [ frequency ]
+
+        range:
+            type: object
+            properties:
+                min:
+                    title: Minimal frequency for the range
+                    type: number
+                max:
+                    title: Maximal frequency for the range
+                    type: number
+            required: [ min, max ]
+
+        step:
+            type: object
+            properties:
+                step:
+                    title: frequency step
+                    type: number
+            required: [ step ]
+
+    band:
+        set:
+            type: object
+            properties:
+                value: $/schemas/types/band
+            required: [ value ]
+
+        get:
+            type: object
+            properties:
+                value: $/schemas/types/band
+            required: [ value ]
+
+        supported_bands:
+            type: array
+            contains: $/schemas/types/band
+            required: [ value ]
+
+    rds:
+        reply:
+            success:
+                type: object
+                properties:
+                    rds:
+                        title: '"playing now" informations'
+                        type: string
+                required: [ rds ]
+
+    start_stop_reply:
+        reply: #useless ?
+            type: object
+            properties:
+                value: { enum: ["playing", "stopped" ] }
+            required: [ value ]
+    stop:
+        reply: #useless ?
+            type: object
+            properties:
+                value: { const: "stopped" }
+            required: [ value ]
+
+    start_scan:
+        request:
+            type: object
+            properties:
+                direction: { enum: ["forward, backward" ] }
+            required: [ direction ]
+
+    stereo_mode:
+        type: object
+        properties:
+            value: $/schemas/types/stereo_mode
+        required: [ value ]
+
+    subscription:
+        type: object
+        properties:
+            value: { enum: ["frequency", "station_found", "status" ] }
+        required: [ value ]
+
+    none:
+        title: no value, just null
+        const: null
