@@ -10,7 +10,7 @@ info:
         (eg. frequency, band, ....) and allows requesting infos (RDS,...)
   version: "0.1"
   author: AGL
-  maintainer: Matt Ranostay	(Konsulko)
+  maintainer: Matt Ranostay (Konsulko)
   homepage: https://gerrit.automotivelinux.org/gerrit/apps/agl-service-radio
 
 tools:
@@ -55,37 +55,37 @@ verbs:
         description: Get RDS information
         request: $/schemas/none
         reply:
-            success: $/schemas/rds/replay
+            success: $/schemas/rds/reply
             _: may fail if not supported by the radio backend
 
     band_supported:
         description: Check band support
-        request: $/schemas/band/request
+        request: $/schemas/band/get
         reply:
             success: $/schemas/band/supported_bands
             _: dickhead !!! faceplam... fails if the band is invalid
 
     frequency_range:
         description: Get frequency range (given a modulation)
-        request: $/schemas/band/request
+        request: $/schemas/band/get
         reply:
             success: $/schemas/frequency/range
             _: fails if modulation is unknown.
 
     frequency_step:
         description: Get frequency step
-        request: $/schemas/band/request
+        request: $/schemas/band/get
         reply: $/schemas/frequency/step
 
     start:
         description: Start radio playback
         request: $/schemas/none
-        reply: $/schemas/start/reply
+        reply: $/schemas/start_stop_reply/reply
 
     stop:
         description: Stop radio playback
         request: $/schemas/none
-        reply: $/schemas/stop/reply
+        reply: $/schemas/start_stop_reply/reply
 
     scan_start:
         description: Start station scan
@@ -117,14 +117,14 @@ verbs:
 
     subscribe:
         description: Subscribe for an event
-        request: $/schemas/subscribe/subscription
+        request: $/schemas/subscription
         reply:
             schema: $/schemas/none
             triggers: start-listening
 
     unsubscribe:
         description: Unsubscribe for an event
-        request: $/schemas/subscribe/subscription
+        request: $/schemas/subscription
         reply:
             schema: $/schemas/none
             triggers: stop-listening
@@ -137,11 +137,11 @@ state-machines:
         transitions:
             #- [ idle, progress, scan-start ]
             #- [ progress, idle, scan-complete ]
-            - {name: scan-start-transition,
+            scan-start-transition: {
                      from: idle,
                      to: progress,
                      trigged-by: start-scan }
-            - {name: scan-stop-transition,
+            scan-stop-transition: {
                      from: idle,
                      to: progress,
                      trigged-by: stop-scan }

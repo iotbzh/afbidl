@@ -1,0 +1,61 @@
+<html>
+<body>
+<h1>Documentation of {{api.name}}</h1>
+
+<h2>{{info.title}}</h2>
+
+{{info.description}}
+
+{{#info}}
+<table>
+<tr><td>Version:</td><td>{{version}}</td></tr>
+<tr><td>Author:</td><td>{{author}}</td></tr>
+<tr><td>Maintainer:</td><td>{{maintainer}}</td></tr>
+<tr><td>Site:</td><td>{{homepage}}</td></tr>
+</table>
+{{/info}}
+
+<h2>Verbs</h2>
+
+<ul>
+{{#api.verbs.*}} <li><a href="#verb-{{*}}">{{*}}</a></li>
+{{/api.verbs.*}}
+</ul>
+
+{{#api.events}}
+<h2>Events</h2>
+<ul>
+{{#*}} <li><a href="#event-{{*}}">{{*}}</a></li>
+{{/*}}
+</ul>
+{{/api.events}}
+
+{{#api.state-machines}}
+<h2>Events</h2>
+<ul>
+{{#*}} <li><a href="#SM-{{*}}">{{*}}</a></li>
+{{/*}}
+</ul>
+{{/api.state-machines}}
+
+{{#api.verbs.*}}
+<a id="verb-{{*}}"></a><h2>Verb {{*}}</h2>
+
+<p>{{description}}</p>
+
+<p><b>request:</b> {{request}}</p>
+
+{{#reply.*}}
+<p><b>reply {{*}}:</b> {{.}}</p>
+{{/reply.*}}
+
+{{/api.verbs.*}}
+
+{{#api.events.*}}
+<a id="event-{{*}}"></a><h2>Event {{*}}</h2>
+{{/api.events.*}}
+
+{{#api.state-machines.*}}
+<a id="SM-{{*}}"></a><h2>State Machine {{*}}</h2>
+{{/api.state-machines.*}}
+
