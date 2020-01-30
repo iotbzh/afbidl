@@ -1,13 +1,19 @@
 <html>
+<head>
+<link rel="stylesheet" type="text/css" href="style.css">
 <body>
-<h1>Documentation of {{api.name}}</h1>
 
+<h1>Documentation of {{info.apiname}}</h1>
+
+<!----------------------------------------------------------------------------
+--      INFO
+----------------------------------------------------------------------------->
 <h2>{{info.title}}</h2>
 
 {{info.description}}
 
 {{#info}}
-<table>
+<table class="top-info">
 <tr><td>Version:</td><td>{{version}}</td></tr>
 <tr><td>Author:</td><td>{{author}}</td></tr>
 <tr><td>Maintainer:</td><td>{{maintainer}}</td></tr>
@@ -15,47 +21,165 @@
 </table>
 {{/info}}
 
+<!----------------------------------------------------------------------------
+--      INDEXES
+----------------------------------------------------------------------------->
+<div class="all-indexes">
+
+{{#verbs}}
+<div class="verbs">
 <h2>Verbs</h2>
-
 <ul>
-{{#api.verbs.*}} <li><a href="#verb-{{*}}">{{*}}</a></li>
-{{/api.verbs.*}}
+{{#*}} <li><a href="#verb-{{*}}">{{*}}</a></li>
+{{/*}}
 </ul>
+</div>
+{{/verbs}}
 
-{{#api.events}}
+{{#events}}
+<div class="events">
 <h2>Events</h2>
 <ul>
 {{#*}} <li><a href="#event-{{*}}">{{*}}</a></li>
 {{/*}}
 </ul>
-{{/api.events}}
+</div>
+{{/events}}
 
-{{#api.state-machines}}
-<h2>Events</h2>
+{{#state-machines}}
+<div class="states">
+<h2>States</h2>
 <ul>
 {{#*}} <li><a href="#SM-{{*}}">{{*}}</a></li>
 {{/*}}
 </ul>
-{{/api.state-machines}}
+</div>
+{{/state-machines}}
 
-{{#api.verbs.*}}
-<a id="verb-{{*}}"></a><h2>Verb {{*}}</h2>
+</div>
+<!----------------------------------------------------------------------------
+--      VERBS
+----------------------------------------------------------------------------->
+<div class="all-verbs">
 
+{{#verbs.*}}
+<div class="verb">
+
+<a id="verb-{{*}}"></a>
+<h2>Verb {{*}}</h2>
+
+<div class="description">
 <p>{{description}}</p>
+</div>
 
-<p><b>request:</b> {{request}}</p>
+<div class="request">
+<p><b>request:</b></p>
+<div>
+{{#request}}{{>schema.must}}{{/request}}
+</div>
+</div>
 
+<div class="replies">
+<p><b>replies:</b></p>
 {{#reply.*}}
-<p><b>reply {{*}}:</b> {{.}}</p>
+<div class="reply">
+<p><b>on {{*}}:</b></p>
+<div>
+{{#*}}
+{{#when-state}}<p><b>When states</b>:</p><ul>
+  {{#.*}}<li><b>{{*}}</b> = {{.}}</li>{{/.*}}
+</ul>{{/when-state}}
+{{#triggers}}<p><b>Triggers</b>:</p><ul>
+  {{#.*}}<li><b>{{.}}</b></li>{{/.*}}
+  {{^.*}}<li><b>{{.}}</b></li>{{/.*}}
+</ul>{{/triggers}}
+{{#schema}}{{>schema.must}}{{/schema}}
+{{^schema}}{{>schema.must}}{{/schema}}
+{{/*}}
+{{^*}} {{.}} {{/*}}
+</div>
+</div>
 {{/reply.*}}
+</div>
 
-{{/api.verbs.*}}
+</div>
+{{/verbs.*}}
 
-{{#api.events.*}}
-<a id="event-{{*}}"></a><h2>Event {{*}}</h2>
-{{/api.events.*}}
+</div>
+<!----------------------------------------------------------------------------
+--      EVENTS
+----------------------------------------------------------------------------->
+<div class="all-events">
 
-{{#api.state-machines.*}}
-<a id="SM-{{*}}"></a><h2>State Machine {{*}}</h2>
-{{/api.state-machines.*}}
+{{#events.*}}
+<div class="event">
 
+<a id="event-{{*}}"></a>
+<h2>Event {{*}}</h2>
+
+<div class="description">
+<p>{{description}}</p>
+</div>
+
+{{#when-state}}
+<p><b>When states</b></p>
+<ul>
+{{#*}}
+<li>{{*}} = {{.}}</li>
+{{/*}}
+</ul>
+{{/when-state}}
+
+{{#schema}}{{>schema.must}}{{/schema}}
+
+</div>
+{{/events.*}}
+
+</div>
+<!----------------------------------------------------------------------------
+--      STATE MACHINES
+----------------------------------------------------------------------------->
+<div class="all-states">
+
+{{#state-machines.*}}
+<div class="state">
+
+<a id="SM-{{*}}"></a>
+<h2>State Machine {{*}}</h2>
+
+<div class="description">
+<p>{{description}}</p>
+</div>
+
+<div class="scope">
+<p><b>scope</b>: {{scope}}</p>
+</div>
+
+<div class="states">
+<p><b>states</b> (initial <b>{{initial}}</b>)</p>
+<ul>
+{{#states}}
+<li>{{.}}</li>
+{{/states}}
+</ul>
+</div>
+
+<div class="transitions">
+<p><b>transitions</b></p>
+<ul>
+{{#transitions.*}}
+<li>{{*}}: FROM {{from}} TO {{to}} WHEN {{trigged-by}}</li>
+{{/transitions.*}}
+{{^transitions.*}}
+{{#transitions}}
+<li>{{.}}</li>
+{{/transitions}}
+{{/transitions.*}}
+</ul>
+</div>
+
+
+</div>
+{{/state-machines.*}}
+
+</div>

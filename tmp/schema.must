@@ -1,0 +1,39 @@
+{{#title=!null}}
+        <p><b>TITLE</b>: {{.}} </p>
+{{/title=!null}}
+{{#description=!null}}
+        <p><b>DESCRIPTION</b>: {{.}} </p>
+{{/description=!null}}
+{{#const}}
+        <p><b>CONSTANT</b>: {{.}} </p>
+{{/const}}
+{{#enum}}
+        <p><b>ENUMERATION</b>:</p>
+        <ul>
+{{#*}}          <li>{{.}}</li>
+{{/*}}
+        </ul>
+{{/enum}}
+{{#type}}
+        <p><b>TYPE</b>: {{.}}</p>
+{{/type}}
+{{#properties}}
+        {{#*}}
+        <p><b>PROPERTIES</b>:</p>
+        <ul>
+                <li><b>{{*}}</b>: {{.}}</li>
+        </ul>
+        {{/*}}
+{{/properties}}
+{{#required}}
+        <p><b>REQUIRED PROPERTY</b>: {{.}}</p>
+{{/required}}
+{{#contains}}
+{{.}}
+{{/contains}}
+{{^*}}
+[[[[[[[[[[[[[{{.}}]]]]]]]]]]]]]]]]]
+{{/*}}
+<p>----------------------</p>
+<p>{{.}}</p>
+<p>----------------------</p>

@@ -7,7 +7,7 @@ test -f "$f"
 t="$(mktemp)"
 
 y2j() {
- python -c 'import sys, yaml, json; y=yaml.load(sys.stdin.read()); print(json.dumps(y))'
+ python -c 'import sys, yaml, json; y=yaml.load(sys.stdin.read(), Loader=yaml.FullLoader); print(json.dumps(y))'
 }
 
 sed 's%[$]\(/[^ \t]*\)%{ $ref: "#\1" }%' "$f" | \

@@ -1,0 +1,13 @@
+#/bin/sh
+set -e
+
+if false; then
+        cat "$@"
+else
+        sed 's%[$]\(/[^ \t]*\)%{ $ref: "#\1" }%' "$@"
+fi | \
+if false; then
+	python -c 'import sys, yaml, json; y=yaml.load(sys.stdin.read(), Loader=yaml.FullLoader); print(json.dumps(y))'
+else
+	python -c 'import sys, yaml, json; y=yaml.load(sys.stdin.read()); print(json.dumps(y))'
+fi
