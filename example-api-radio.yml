@@ -126,7 +126,7 @@ verbs:
         reply:
             success:
                 schema: $/schemas/none
-                triggers: start-listening
+                triggers: start-signaling
 
     unsubscribe:
         description: "Cancel subscription to an event"
@@ -134,12 +134,13 @@ verbs:
         reply:
             success:
                 schema: $/schemas/none
-                triggers: stop-listening
+                triggers: stop-signaling
 
 
 state-machines:
     scanning:
         description: "Indicates if the backend is currently scanning frequency"
+        scope: global
         states: [ idle, progress ]
         initial: idle
         transitions:
@@ -156,15 +157,16 @@ state-machines:
             #- [ idle, progress, scan-start ]
             #- [ progress, idle, scan-complete ]
 
-    listening:
-        description: "Clients that are listening state 'ON' will receives event emited"
+    signaling:
+        description: "Emits events to listeners"
+        scope: session
         states:
             - on
             - off
         initial: on
         transitions:
-            - [on, off, start-listening ]
-            - [off, on, stop-listening ]
+            - [on, off, start-signaling ]
+            - [off, on, stop-signaling ]
 
 
 events:
@@ -172,18 +174,18 @@ events:
         description: "event emited when a new frequency is tuned (TBC)"
         schema: $/schemas/frequency/event
         when-state:
-            listening: on
+            signaling: on
     station_found:
         description: "event emited when a valid station is tuned (frequency with a good S/N ration ? TBC)"
         schema: $/schemas/frequency/event
         when-state:
-            listening: on
+            signaling: on
             scanning: progress
     status:
         description: "event emited when playing status changes."
         schema: $/schemas/playing/status
         when-state:
-            listening: on
+            signaling: on
 
 
 # Follow JsonSchema specification (https://json-schema.org/)
@@ -205,8 +207,9 @@ schemas:
         # we could unify get, set and event if they all had the same property (for instance : value)
         # also description would be much simplier : "object used to pass a frequency value"
         set:
-            type: object
+            title:
             description: "object used to set the tuned frequency"
+            type: object
             properties:
                 value:
                     title: frequency value
@@ -215,8 +218,9 @@ schemas:
             required: [ value ]
 
         get:
-            type: object
+            title:
             description: "object used to retreive tuned frequency"
+            type: object
             properties:
                 frequency:
                     title: frequency value
@@ -225,8 +229,9 @@ schemas:
             required: [ frequency ]
 
         range:
-            type: object
+            title:
             description: "object used to retreive minimum and maximum frequency for a given modulation"
+            type: object
             properties:
                 min:
                     title: Minimal frequency for the range
@@ -237,8 +242,9 @@ schemas:
             required: [ min, max ]
 
         step:
-            type: object
+            title:
             description: "object used to retreive the increment between 2 tunable frequencies"
+            type: object
             properties:
                 step:
                     title: frequency step
@@ -246,8 +252,9 @@ schemas:
             required: [ step ]
 
         event:
-            type: object
+            title:
             description:
+            type: object
             properties:
                 value:
                     title: frequency value
@@ -258,18 +265,23 @@ schemas:
         # same here, we could unify set and get.
         # not done yet to stay coherent with frequency schemas
         set:
+            title: 
+            description:
             type: object
             properties:
                 value: $/schemas/types/band
             required: [ value ]
 
         get:
+            title: 
+            title: 
             type: object
             properties:
                 value: $/schemas/types/band
             required: [ value ]
 
         supported_bands:
+            title: 
             description: "list of bands/modulations supported by the radio backend"
             type: array
             contains: $/schemas/types/band
@@ -277,8 +289,9 @@ schemas:
     rds:
         reply:
             success:
-                type: object
+                title: 
                 description: "object used to retreive Radio Data System information"
+                type: object
                 properties:
                     rds:
                         title: '"playing now" informations'
@@ -287,34 +300,39 @@ schemas:
 
     playing:
         status:
-            type: object
+            title: 
             description: "Object used to return the playing status"
+            type: object
             properties:
                 value: { enum: ["playing", "stopped" ] }
             required: [ value ]
 
     start_scan:
         request:
-            type: object
+            title: 
             description: "object used to pass the direction of the frequency scan"
+            type: object
             properties:
                 direction: { enum: ["forward, backward" ] }
             required: [ direction ]
 
     stereo_mode:
-        type: object
+        title: 
         description: "Object used to pass a stereo mode (NB : stereo is either true or false. Polyphony is more general, does it make sense here ?)"
+        type: object
         properties:
             value: $/schemas/types/stereo_mode
         required: [ value ]
 
     subscription:
-        type: object
+        title: 
         description: "describes a subscription to an event"
+        type: object
         properties:
             value: { enum: ["frequency", "station_found", "status" ] }
         required: [ value ]
 
     none:
         title: no value, just null
+        description: 
         const: null
