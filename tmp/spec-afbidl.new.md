@@ -1,4 +1,4 @@
-# API specification for AGL
+# Study for a formalism of describing API in the context of AGL
 
 ## Abstract
 
@@ -8,55 +8,30 @@ We first define our needs, search for a candidate in the existing FOSS
 pool, and eventually set up a custom solution (based on existing and
 validated pieces of Free Software).
 
-## Notations and Definitions
+## Terminology
 
-In this document the <b font-family="monospace">bold monospace font</b> will be used to indicate we refer
-to one of the following definition, as per the JSON RFC [][json-rfc]:
+In this document we use the term **API Specification** as broad term, that
+can actually be refined in more specific tasks : **Definition**,
+**Specification**, and **Documentation**.
 
-> JSON can represent four primitive types (<b font-family="monospace">strings
-> </b>, <b font-family="monospace">numbers</b>, <b font-family="monospace">
-> booleans</b>, and <b font-family="monospace">null</b>) and two structured 
-> types (<b font-family="monospace">objects</b> and> <b font-family="monospace">
-> arrays</b>).
-
-Although, in order to allow other representation than JSON (see below), we
-don't stick to the lexical definitions of those types as stated in this RFC,
-any representation used to describe our APIs must comply with the following
-definitions:
-
-- <b font-family="monospace">number</b>: this type is similar to that used in
-   most programming languages. It can be a signed integer, or a floating point
-   representation. It is represented in base 10, as per JSON RFC requirement.
-- <b font-family="monospace">string</b>: this type is similar to conventions
-  used in the C family of programming languages.
-- <b font-family="monospace">boolean</b> is either **true** or **false**
-- <b font-family="monospace">null</b> is the empty element
-- <b font-family="monospace">array</b>: an ordered list of zero or more
-  values, each of which may be of any type.
-- <b font-family="monospace">object</b>: an unordered collection of name–value
-  pairs  where the names (also called keys) are strings. Objects are intended
-  to represent associative arrays, where each key is unique within an object.
-
-## About API specification
-
-API Specification is here a broad term that can be understood as : Definition,
-Specification, or Documentation.
 They are all related, but also different entities, with their respective
 purposes.
-In some context, Specification will done in a human natural language,
-with focus on high-level aspects, behavior and responsibilities...
 
-Definition is a more fine-grained level, often describing the messages
-exchanged by the API, using a more machine-oriented formalism that allows
-automated processing.
+Historically, and still often nowadays, **Specification** is done in a human,
+natural language, with focus on high-level aspects, behavior and
+responsibilities...
 
-Documentation is aimed at developers, API users. It will often compile
-information found in the former, synthesized in a convenient way, for instance
-as a set of HTML pages, with hyperlinks, that can be conveniently read in
-a web browser.
+**Definition** refers to more fine-grained level, often describing the
+messages exchanged by the API, using a more machine-oriented formalism that
+allows automated processing.
 
-As for now, we will use the word specification in its board meaning, unless
-explicitly stated.
+Finally **Documentation** is aimed at developers, API users. It will often
+compile information found in the former, synthesized in a convenient way,
+for instance as a set of HTML pages, with hyperlinks, that can be conveniently
+read in a web browser.
+
+The formalism we propose in this document address those three aspect in a unified
+and (hopefully) convenient way, making the distinction kind of obsolete.
 
 ## Requirements for AGL
 
@@ -91,53 +66,77 @@ The formalism SHALL, at least allows to fulfill the following features:
 - Specifying APIs that throw events (expected, or spurious)
 - Describing the security model based on permissions
 - Being Suitable for the generation of:
-  - Documentation (in various format: HTML, pdf, markdown, ...)
-  - Code skeleton with various optionnal features
+  - Documentation in various formats:
+    - HTML
+    - pdf
+    - markdown
+    - ...
+  - Code skeleton various languages (C, Python...) with optional features;
     - parameter validation
     - marshalling / unmarshalling
+    - ...
   - Automated tests
+  - ...
 
 ## Evaluation of existing tools
 
+### Interface Description Langages
+
+With the raise of distributed computing -- using IPCs (InterProcess
+Communication) and/or RPCs (Remote Procedure Calls) mechanisms -- urged the
+need for a way to describe the Programming Interfaces provided by an arbitrary
+node. Indeed while a language like C, or even Java, is self-descriptive at its
+source code level, distributed computing can imply various hardware and software
+technologies with no common standard. Furthermore, calls are often serialized
+into messages of a generic protocol messages (such has TCP, UNIX sockets, ...)
+with no intrinsic structure.
+
+IDL is an attempt to address such problems. Various IDLs tried different
+approaches, and they are getting mature since years. They are now found with
+clear predominance in Web-based technologies.
+
 ### Odler IDLs
 
-IDLs are getting mature since years. Their primary use is found in describing
-IPCs (InterProcess Communication) and RPCs (Remote Procedure Calls) mechanisms,
-in distributed computing, often between different nodes through a network.
-They are now found with clear predominance in Web-based technologies.
-
-One of the first shot was released with the CORBA 2 standard, where the urge
-to interface various technologies (mainly C++ and Java) led to an
+One of the first shot was released with the CORBA 2 standard, where the need
+for interfacing various technologies (mainly C++ and Java) led to an
 implementation-agnostic description formalism of the interfaces provided by
 system components, regardless of their respective actual implementation.
+CORBA 2 IDL already allowed some automatic processing, but unlike modern
+IDLs made of structured data trees, CORBA IDL is a "full-featured" language
+than need a compiler-like program to be interpreted. Also, for the record,
+CORBA used a specific binary format for message marshalling.
 
 By the meantime, WebServices (based on XML RPCs over HTTP, aka SOAP) and the
-next decade RESTFul APIs (said "Web Applications") started to spread, with
-their own needs of describing nodes interfaces for seamless interoperability.
+next decade RESTFul APIs (so-called "Web Applications") started to spread,
+with their own needs of describing nodes interfaces for seamless
+interoperability.
 
 WSDL (Web Service Description Language) was used to describe SOAP interfaces,
 while WADL (Web Application Description Language) and RAML (Restful Application
 Modeling Language), and swagger, among others were aimed at RESTFul APIs.
 
 One thing that is worth to notice is that from the beginning and until now,
-each new RPC technology came up with its own specific IDL (even if IDLs
-are all sharing common concept, no unifying / general purpose language
-made any major break-through...
+each new RPC technology came up with its own specific IDL: althrough all IDLs
+are all sharing common concept, no unifying / general purpose language made
+any major break-through...
 
 ### State-of-the-art IDLs
 
-By time passed, as from 2010 or so, JSON started to widely replace XML for
-structured data representation in the messages exchanges. Various IDLs
-evolved to reflect this change.
+By time passed, as from 2010 or so, JSON ([][json-org], [][json-rfc]) started
+to widely replace XML for structured data representation in the messages
+exchanges. Various IDLs evolved to reflect this change.
 
-As per JIRA SPEC-1903 [][spec1903], 3 main IDLs were identified:
+As AGL uses JSON for message (verb request and replies, events) payload
+encoding, using JSON (or another equivalent format) to describes the messages
+payload format sounds attractive.
+
+As per JIRA SPEC-1903 [][spec1903], 3 main IDLs were identified.
+
+All of them are using JSON (or equivalent format to describe interfaces):
 
 - OpenAPI 3.0 [][openapi]
 - asyncAPI 1.2 [][asyncapi]
-- GENIVI Franca [][]
-
-  GENIVI Franca very close of expectations in terms of features, but closely
-  tighten to eclipse / Xtext.
+- GENIVI Franca [][franca]
 
 #### OpenAPI
 
@@ -155,7 +154,7 @@ some twist of the model and then some ugliness
 verbosity.
 
 OpenAPI is not a language, unlike many IDL, but rather describes structured
-data, in JSON format ([][json-org], [][json-rfc]).
+data, in JSON format.
 
 #### Others
 
@@ -169,15 +168,22 @@ generate and to manipulate by tools.
 
 ToBeDone : what has been evaluated ? -> SEE SPEC-1903 - also used in automotive: Genivi Franca IDL
 
+#### GENIVI
+
+GENIVI Franca is very close to our expectations in terms of features, but also closely tighten to eclipse / Xtext.
+
+Introducing those in AGL mecanism as "intricate dependencies" is probably not
+a brilliant idea.
+
 ## Proposal of a new formalism
 
-Althrough no suitable solution is available off the shelf, this research
-taught its lessons and some ideas stemmed from those investigations.
+Although no suitable solution is available off the shelf, this research taught
+its lessons and some ideas stemmed from those investigations.
 
-First, both of them are using structured data representation to encode the
-API description, allowing JSON and more human-friendly format as YAML.
-Furthermore both are relying on JSON Schema [][json-schema], for the
-description (and runtime validation) of exchanged messages payload.
+First, both of them are using structured data representation to encode the API
+description, allowing JSON and more human-friendly format as YAML. Furthermore
+both are relying on JSON Schema [][json-schema], for the description (and
+runtime validation) of exchanged messages payload.
 
 As a side note, this proposal includes advanced designs introduced after some
 discussions with Joël Champeau and Philippe Dhaussy, researchers at ENSTA
@@ -240,10 +246,34 @@ and the converter works fine.
 There are example of such YAML (and other) to JSON and vice-versa converters
 like [][any-json].
 
-### API description file structure
+## API description file structure
 
-Either written in YAML, JSON or any equivalent format, the description file
-should/must provide, at its root level the following sections:
+The API specification document will be written in YAML, JSON or any equivalent,
+supported format. The list is still to be defined.
+
+A proposition is to use any-json [][any-json], (see their website for the
+supported format list)
+
+### JSON objects
+
+As a reminder, JSON defines an `object` as:
+> an unordered collection of name–value pairs where the names (also called
+> keys) are `strings`. Objects are intended to represent associative arrays,
+> where each key is unique within an object.
+
+*Source:* *[wikipedia-json]*
+
+As `objects` can be nested inside another `object` item value, they are
+convenient to represent trees.
+
+At a syntax level, the API description document consist at its root level of
+an `object`, which items are called **sections**. The value of each section
+consists of an `object`, which content depends on the section it describes
+(see below).
+
+### afbidl sections
+
+The API description document should/must provide, the following sections:
 
 - **afbidl** (mandatory): identifies afbidl document type and specify version.
 - **info** (mandatory): General information about the API.
@@ -255,39 +285,34 @@ should/must provide, at its root level the following sections:
   (i.e. generated at runtime) will be addressed later on.
 - **state-machines** (optional): Internal states described as Finite State
   Machines (state-transition automats).
-- **schemas** (mandatory): describe the content of messages (verb requests and
-  replies, events), complying to the JSON-Schema formalism.
 
-At a syntax level, the API description document consist of an
-<b font-family="monospace">object</b>, which items are the sections discussed
-above. The key of each section/item is one of the keywords defined in the former
-list. The value of each section consists of an <b font-family="monospace">object
-</b>, which content depends on the section it describes.
+Those section names are reserved. User can still add arbitrary sections. In
+examples provided below, we define a **schemas**
 
 ### afbidl
 
 This section indicates that the document is written in afbidl format and complies
 to this specification.
 
-It is <b font-family="monospace">string</b> (made of integers concatenated with dots).
+It is `string` (made of integers concatenated with dots).
 As for now the value MUST BE `"0.1"`.
 
 ### info (Genral Information)
 
-This section is commonly found in most IDLs (either info or information). It 
+This section is commonly found in most IDLs (either info or information). It
 gathers various information about the API : name, description, version, author, website...
-In this section, items values are mostly simple types (strings, and possibly
-numbers and booleans).
+In this section, items values are mostly simple types (`strings`, and possibly
+`numbers` and `booleans`).
 
 This section MUST AT LEAST provide:
 
-- `apiname`: a <b font-family="monospace">string</b> identifier (unique) that
+- `apiname`: a `string` identifier (unique) that
   reference the API.
-- `version`: a <b font-family="monospace">string</b> (made of integers
+- `version`: a `string` (made of integers
   concatenated with dots). It matches the revision of the API described in the
   document.
 
-Here is an example of an **info** section, written in YAML (describing the GPS 
+Here is an example of an **info** section, written in YAML (describing the GPS
 API):
 
 ```YAML
@@ -307,10 +332,10 @@ info:
 
 This section will hold the configuration for automatic processing (e.g. code
 and doc generation).
-It type is an <b font-family="monospace">object</b>.
+It type is an `object`.
 
 In this section, item keys are identifiers referencing an external tool.
-The value itself will probably be an <b font-family="monospace">object</b> as
+The value itself will probably be an `object` as
 well, in keys will identify some configuration parameter... But there is no
 hard constraint on this. It's really a bunch of config options.
 The exact format depends on the tool aimed by the item.
@@ -328,21 +353,28 @@ tools:
 
 ```
 
+Those options may be superseded by command line option when invoking the tool.
+
 ### verbs
 
 This section describes the verbs exposed by the API, and implemented in a
 binding. Each item describe one (and only one verb).
 Each item key is the verb name (identifier).
-Its value is an <b font-family="monospace">object</b>, describing:
+Its value is an `object`, describing:
 
 1. The request schema for this verb (that may include optional parameters)
 2. The possible replies (success, failure, etc.), along with their respective
 schemas
 
-Each message (request and replies) refers to a schema in the **schemas**
-section (it is technically possible, despite not being best practice, and then
-discouraged, to directly explicit the schema without a reference to the
-**schemas** section).
+Each message (request and replies) refers to a schema. This schema can be:
+
+- inlined. The schema is directly described after the message (request, reply)
+  it describes. It is convinient for simple, short messages but prevent
+  factorization by reusing a schema in various message with different roles.
+- an internal document reference (a "path" of nodes, under a suer-defined
+  *schemas* section). In this case, the reference is a string beginning with `$schemas`
+  keyword, followed by of path of children node concatenated with slashes (`/`).
+- an external reference ??? (another document, schema libraries... ?)
 
 Here is an example of a simple **verbs** section, containing only one verb.
 Calling this verb can lead to two possible outcomes, success or failure.
@@ -419,9 +451,9 @@ Bindings API often have a subscribe/unsubscribe verb pair that wraps this
 mechanics in a push/pull-like model, but as stated above, this is not a
 requirement.
 As previous section, the **events** section is an
-<b font-family="monospace">object</b>. Each item of this
-<b font-family="monospace">object</b> describes an event, the key being its
-identifier, and the value an <b font-family="monospace">object</b>, that
+`object`. Each item of this
+`object` describes an event, the key being its
+identifier, and the value an `object`, that
 MUST at least contain an item which key is `schema`, and it's value a JSON
 schema (the best practice being, once again, a reference to the **schemas**
 section).
@@ -442,34 +474,36 @@ The `when-state` property of events is a logical condition, combining internal
 **state-machines** states, under which event emission is actually done. In
 other words, the event is NOT emitted UNLESS this condition is met.
 
-The `when-state` is an <b font-family="monospace">object</b>, representing a
-tree that encodes the logical condition. Each leaf of this tree MUST BE a
-state as per **state-machines**, and each node MUST BE a logical operator, 
-as per JSON-Schema definition, so either:
+The `when-state` is an `object`, representing a tree that encodes the logical
+expression. Each leaf of this tree MUST BE a state as per **state-machines**,
+and each node MUST BE a logical operator.
+
+As per JSON-Schema definition, available operators are:
 
 - `allOf`: logical AND
 - `anyOf`: logical OR (at least one)
 - `oneOf`: logical XOR (one and only one)
 
-If multiple states are used as a condition without explicitly specifying a
-logical operator, `allOf` is implied by default.
+When the `when-state` clause has multiple items, `allOf` operator is applied.
 
 Another example, using the example state machine defined above, could be:
 
 ```YAML
         when-state:
             example-state-machine: another-state
-``` 
+```
 
 ### schemas
 
 
-[json-org]:    http://json.org/                                     "JSON format"
-[json-rfc]:    https://tools.ietf.org/html/rfc8259                  "JSON format RFC"
-[json-schema]: https://json-schema.org/                             "JSON Schema"
-[yaml]:        https://yaml.org/                                    "YAML format"
-[any-json]:    http://json.org/                                     "any-JSON"
-[openapi]:     https://www.openapis.org/                            "Open API"
-[asyncapi]:    https://www.asyncapi.com/                            "Async API"
-[franca]:      https://franca.github.io/franca/                     "Franca"
-[spec1903]:    https://jira.automotivelinux.org/browse/SPEC-1903    "SPEC-1903"
+
+[json-org]:    http://json.org/                                    "JSON format"
+[json-rfc]:    https://tools.ietf.org/html/rfc8259                 "JSON format RFC"
+[json-schema]: https://json-schema.org/                            "JSON Schema"
+[yaml]:        https://yaml.org/                                   "YAML format"
+[any-json]:    http://json.org/                                    "any-JSON"
+[openapi]:     https://www.openapis.org/                           "Open API"
+[asyncapi]:    https://www.asyncapi.com/                           "Async API"
+[franca]:      https://franca.github.io/franca/                    "Franca"
+[spec1903]:    https://jira.automotivelinux.org/browse/SPEC-1903          "SPEC-1903"
+[wikip-json]:  https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax   "JSON on wikipedia"
