@@ -1,5 +1,7 @@
+---
 %YAML 1.3
 ---
+
 afbidl: "0.1"
 
 info:
@@ -35,7 +37,6 @@ tools:
 
 
 verbs:
-
     frequency:
         description: "Set/Get frequency (NB: we can't just get the value on request)"
         request: $/schemas/frequency/set
@@ -144,14 +145,14 @@ state-machines:
         states: [ idle, progress ]
         initial: idle
         transitions:
-            scan-start-transition: {
-                     from: idle,
-                     to: progress,
-                     trigged-by: start-scan }
-            scan-stop-transition: {
-                     from: idle,
-                     to: progress,
-                     trigged-by: stop-scan }
+            scan-start-transition:
+                     from: idle
+                     to: progress
+                     trigged-by: start-scan
+            scan-stop-transition:
+                     from: idle
+                     to: progress
+                     trigged-by: stop-scan
             # Just for the record: the following compact syntax is
             # equivalent to the developped syntax above
             #- [ idle, progress, scan-start ]
@@ -171,18 +172,18 @@ state-machines:
 
 events:
     frequency:
-        description: "event emited when a new frequency is tuned (TBC)"
+        description: "event emitted when a new frequency is tuned (TBC)"
         schema: $/schemas/frequency/event
         when-state:
             signaling: on
     station_found:
-        description: "event emited when a valid station is tuned (frequency with a good S/N ration ? TBC)"
+        description: "event emitted when a valid station is tuned (frequency with a good S/N ration ? TBC)"
         schema: $/schemas/frequency/event
         when-state:
             signaling: on
             scanning: progress
     status:
-        description: "event emited when playing status changes."
+        description: "event emitted when playing status changes."
         schema: $/schemas/playing/status
         when-state:
             signaling: on
