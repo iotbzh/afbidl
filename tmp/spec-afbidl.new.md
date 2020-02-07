@@ -201,19 +201,19 @@ payloads (validation, parsing, etc). As a matter of fact, this payload
 is encoded in JSON.
 
 As stated above, other IDLs like OpenAPI and AsyncAPI do rely on JSON-Schema
-[7][json-schema] for this kind of task (NB : a subset extension for OpenAPI, 
+[7][json-schema] for this kind of task (NB : a subset extension for OpenAPI,
 a super-set for AsyncAPI).
 
-JSON-Schema enables a normalized description of the syntax a given chuck of JSON.
+JSON-Schemas enables a normalized description of the syntax a given chuck of JSON.
 The schema itself being written in JSON, (or can be converted to) it can be, in
 turn, validated against a so-called "meta-schema". Meta-schemas are also
 JSON-Schemas, but a "special" kind as they also validates themselves.
 It allows to describe complex values and their constraints using a format easy
 to integrate in tools.
 
-One big advantage of using JSON Schema is that it extensively used, so it comes
-with a whole ecosystem of tools (parsers, validators, ...), that can be taken
-off-the-shelf and used as-is, as part of a bigger system.
+One big advantage of using JSON Schema is that it is extensively used, so it
+comes with a whole ecosystem of tools (parsers, validators, ...), that can be
+taken off-the-shelf and used as-is, as part of a bigger system.
 
 JSON-Schema can't be used to describe those whole API but focuses on
 describing messages structure (request and replies "schemas").
