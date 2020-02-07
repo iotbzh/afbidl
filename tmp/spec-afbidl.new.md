@@ -1,11 +1,11 @@
-# Study for a formalism of describing API in the context of AGL
+# Study for a formalism aimed to APIs description in the context of AGL
 
 ## Abstract
 
 This document is a proposal of a formalism that allows to specify, define
 and document AGL bindings APIs (Application Programming Interfaces).
 We first define our needs, search for a candidate in the existing FOSS
-pool, and eventually set up a custom solution (based on existing and
+pool, and eventually come up a custom solution (based on existing and
 validated pieces of Free Software).
 
 ## Terminology
@@ -35,8 +35,9 @@ and (hopefully) convenient way, making the distinction kind of obsolete.
 
 ## Requirements for AGL
 
-First off: is API specification useful for AGL ? The answer is a resounding
-*"YES !"*
+First off: is API specification useful for AGL ?
+
+The answer is a resounding *"YES !"*
 
 Indeed, the micro service architecture of AGL and its flexible IPC mechanism
 emphasizes on the decomposition of services or applications in tiny cooperative
@@ -45,7 +46,7 @@ but, subsequently, implies to correctly document interfaces.
 
 In our opinion, we should avoid specifying using natural human language as
 much as possible. We should favor the use of a machine-oriented formalism to
-describe most of the aspects of an API.
+describe most of (if not all) the aspects of an API.
 
 ### Task automation
 
@@ -64,6 +65,7 @@ The formalism SHALL, at least allows to fulfill the following features:
 
 - Describing JSON data of APIs
 - Specifying APIs that throw events (expected, or spurious)
+- Describing the internal states and their transitions (state-machines)
 - Describing the security model based on permissions
 - Being Suitable for the generation of:
   - Documentation in various formats:
@@ -80,16 +82,18 @@ The formalism SHALL, at least allows to fulfill the following features:
 
 ## Evaluation of existing tools
 
-### Interface Description Langages
+### Interface Description Languages
 
-With the raise of distributed computing -- using IPCs (InterProcess
-Communication) and/or RPCs (Remote Procedure Calls) mechanisms -- urged the
+With the raise of distributed computing &#8212; using IPCs (InterProcess
+Communication) and/or RPCs (Remote Procedure Calls) mechanisms &#8212; urged the
 need for a way to describe the Programming Interfaces provided by an arbitrary
-node. Indeed while a language like C, or even Java, is self-descriptive at its
-source code level, distributed computing can imply various hardware and software
-technologies with no common standard. Furthermore, calls are often serialized
-into messages of a generic protocol messages (such has TCP, UNIX sockets, ...)
-with no intrinsic structure.
+node.
+
+Indeed, while a language like C, or Java, is self-descriptive at its source code
+level, distributed computing can imply various hardware and software technologies
+with no common standard. Furthermore, calls are often serialized into messages of
+a generic protocol messages (such has TCP, UNIX sockets, ...) with no intrinsic
+structure.
 
 IDL is an attempt to address such problems. Various IDLs tried different
 approaches, and they are getting mature since years. They are now found with
@@ -103,8 +107,9 @@ implementation-agnostic description formalism of the interfaces provided by
 system components, regardless of their respective actual implementation.
 CORBA 2 IDL already allowed some automatic processing, but unlike modern
 IDLs made of structured data trees, CORBA IDL is a "full-featured" language
-than need a compiler-like program to be interpreted. Also, for the record,
-CORBA used a specific binary format for message marshalling.
+than need a compiler-like program to be interpreted (which is not easy to
+write and quite heavy to maintain). Also, for the record, CORBA used a
+specific binary format for message marshalling.
 
 By the meantime, WebServices (based on XML RPCs over HTTP, aka SOAP) and the
 next decade RESTFul APIs (so-called "Web Applications") started to spread,
@@ -116,13 +121,13 @@ while WADL (Web Application Description Language) and RAML (Restful Application
 Modeling Language), and swagger, among others were aimed at RESTFul APIs.
 
 One thing that is worth to notice is that from the beginning and until now,
-each new RPC technology came up with its own specific IDL: althrough all IDLs
-are all sharing common concept, no unifying / general purpose language made
+each new RPC technology came up with its own specific IDL: although all IDLs
+are all sharing common concepts, no unifying / general purpose language made
 any major break-through...
 
 ### State-of-the-art IDLs
 
-By time passed, as from 2010 or so, JSON ([][json-org], [][json-rfc]) started
+By time passed, as from 2010 or so, JSON ([1][json-org], [2][json-rfc]) started
 to widely replace XML for structured data representation in the messages
 exchanges. Various IDLs evolved to reflect this change.
 
@@ -130,13 +135,13 @@ As AGL uses JSON for message (verb request and replies, events) payload
 encoding, using JSON (or another equivalent format) to describes the messages
 payload format sounds attractive.
 
-As per JIRA SPEC-1903 [][spec1903], 3 main IDLs were identified.
+As per JIRA SPEC-1903 [3][spec1903], 3 main IDLs were identified.
 
 All of them are using JSON (or equivalent format to describe interfaces):
 
-- OpenAPI 3.0 [][openapi]
-- asyncAPI 1.2 [][asyncapi]
-- GENIVI Franca [][franca]
+- OpenAPI 3.0 [4][openapi]
+- asyncAPI 1.2 [5][asyncapi]
+- GENIVI Franca [6][franca]
 
 #### OpenAPI
 
@@ -147,9 +152,9 @@ Sadly, however, the API description language in OpenAPI never provided some of
 the features required/expected by AGL for a such tool. It mainly lacks features
 to describe eventing aspects and the security model is also out-of-scope.
 
-ToBeDone : Possible Extensions  ?
+**ToBeDone:** Possible Extensions  ?
 
-ToBeRewritten: Using OpenAPI also had the disadvantage of implying
+**ToBeRewritten:** Using OpenAPI also had the disadvantage of implying
 some twist of the model and then some ugliness
 verbosity.
 
@@ -158,7 +163,7 @@ data, in JSON format.
 
 #### Others
 
-ToBeRewritten:
+**ToBeRewritten:**
 Many IDL (Interface Description Language) exist
 but they rarely fit all AGL requirements.
 
@@ -166,7 +171,8 @@ First of all, they generally are "languages",
 meaning that they are difficult to parse, to
 generate and to manipulate by tools.
 
-ToBeDone : what has been evaluated ? -> SEE SPEC-1903 - also used in automotive: Genivi Franca IDL
+**ToBeDone :** what has been evaluated ? -> SEE SPEC-1903 - Describing the internal states and their transitions (state-machines)
+also used in automotive: Genivi Franca IDL
 
 #### GENIVI
 
@@ -181,9 +187,7 @@ Although no suitable solution is available off the shelf, this research taught
 its lessons and some ideas stemmed from those investigations.
 
 First, both of them are using structured data representation to encode the API
-description, allowing JSON and more human-friendly format as YAML. Furthermore
-both are relying on JSON Schema [][json-schema], for the description (and
-runtime validation) of exchanged messages payload.
+description, allowing JSON and more human-friendly format as YAML.
 
 As a side note, this proposal includes advanced designs introduced after some
 discussions with Joël Champeau and Philippe Dhaussy, researchers at ENSTA
@@ -193,14 +197,14 @@ in system modeling and formal verification.
 ### JSON Schema
 
 One of the goals of specifying our APIs is to manipulate AGL binding verbs
-payloads (validation, parsing, etc.). As a matter of fact, this payload
+payloads (validation, parsing, etc). As a matter of fact, this payload
 is encoded in JSON.
 
 As stated above, other IDLs like OpenAPI and AsyncAPI do rely on JSON-Schema
-for this kind of task (NB : a subset extension for OpenAPI, a super-set for
-AsyncAPI).
+[7][json-schema] for this kind of task (NB : a subset extension for OpenAPI, 
+a super-set for AsyncAPI).
 
-JSON Schema enables a normalized description of the syntax a given chuck of JSON.
+JSON-Schema enables a normalized description of the syntax a given chuck of JSON.
 The schema itself being written in JSON, (or can be converted to) it can be, in
 turn, validated against a so-called "meta-schema". Meta-schemas are also
 JSON-Schemas, but a "special" kind as they also validates themselves.
@@ -209,21 +213,15 @@ to integrate in tools.
 
 One big advantage of using JSON Schema is that it extensively used, so it comes
 with a whole ecosystem of tools (parsers, validators, ...), that can be taken
-off the shelf and used as is, as part of a bigger system.
-
-Furthermore, we stick at structured data, and we don't implement a
-full-featured language, implying to define its generative grammar, a lexer,
-and other compiler parts (whose are tedious to write and maintain).
+off-the-shelf and used as-is, as part of a bigger system.
 
 JSON-Schema can't be used to describe those whole API but focuses on
 describing messages structure (request and replies "schemas").
 
-They will be found in the "schemas" section of the API description.
-
 ### Toward even more human-friendliness
 
 JSON is a bit more human-friendly than its predecessors like XML, but can
-still be a bit tedious to deal with. Another format like YAML [][yaml] is
+still be a bit tedious to deal with. Another format like YAML [8][yaml] is
 easier to deal with. As stated previously, we'll rely, internally, on JSON and
 JSON-Schemas, but it's worth noting that their is a quasi-isomorphism between
 YAML and JSON data models.
@@ -240,18 +238,18 @@ table", indexing source YAML line number, for each line in the converted JSON.
 NOTE : It may happen that some line in the JSON doesn't have an equivalent;
 for instance, a closing curly brace that closes an object will have an
 equivalent line in the YAML source. This is not problem because that type of
-line should NOT be a source of error - given the YAML is syntactically valid,
+line should NOT be a source of error  given the YAML is syntactically valid,
 and the converter works fine.
 
 There are example of such YAML (and other) to JSON and vice-versa converters
-like [][any-json].
+like any-json [9][any-json].
 
 ## API description file structure
 
 The API specification document will be written in YAML, JSON or any equivalent,
 supported format. The list is still to be defined.
 
-A proposition is to use any-json [][any-json], (see their website for the
+A proposition is to use any-json [9][any-json], (see their website for the
 supported format list)
 
 ### JSON objects
@@ -261,7 +259,7 @@ As a reminder, JSON defines an `object` as:
 > keys) are `strings`. Objects are intended to represent associative arrays,
 > where each key is unique within an object.
 
-*Source:* *[wikipedia-json]*
+*Source:* *[10][wikip-json]*
 
 As `objects` can be nested inside another `object` item value, they are
 convenient to represent trees.
@@ -271,9 +269,12 @@ an `object`, which items are called **sections**. The value of each section
 consists of an `object`, which content depends on the section it describes
 (see below).
 
-### afbidl sections
+### afbidl document sections
 
-The API description document should/must provide, the following sections:
+API description document describe one and only API. As a reminder, a binding
+can implements multiple interfaces.
+
+The API description document SHOULD/MUST provide, the following sections:
 
 - **afbidl** (mandatory): identifies afbidl document type and specify version.
 - **info** (mandatory): General information about the API.
@@ -286,15 +287,23 @@ The API description document should/must provide, the following sections:
 - **state-machines** (optional): Internal states described as Finite State
   Machines (state-transition automats).
 
-Those section names are reserved. User can still add arbitrary sections. In
-examples provided below, we define a **schemas**
+Those section names are _reserved_.
+
+User can still add arbitrary sections, with arbitrary names, AS LONG AS this
+name do not match one the keywords listed above.
+
+In examples provided below, we define a **schemas** section that gathers and
+organizes the various schemas used to describes **verbs** and **events**.
+As a reminder, **schemas** section is optional, can be freely renamed and/or
+be split into multiple sections (**TBD:** *and even maybe ext.ref...*)
 
 ### afbidl
 
-This section indicates that the document is written in afbidl format and complies
-to this specification.
+This section indicates that the document is written in afbidl format and
+complies to this specification.
 
 It is `string` (made of integers concatenated with dots).
+
 As for now the value MUST BE `"0.1"`.
 
 ### info (Genral Information)
@@ -306,11 +315,9 @@ In this section, items values are mostly simple types (`strings`, and possibly
 
 This section MUST AT LEAST provide:
 
-- `apiname`: a `string` identifier (unique) that
-  reference the API.
-- `version`: a `string` (made of integers
-  concatenated with dots). It matches the revision of the API described in the
-  document.
+- `apiname`: a `string` identifier (unique) that reference the API.
+- `version`: a `string` (made of integers concatenated with dots). It matches
+  the revision of the API described in the document.
 
 Here is an example of an **info** section, written in YAML (describing the GPS
 API):
@@ -369,12 +376,18 @@ schemas
 Each message (request and replies) refers to a schema. This schema can be:
 
 - inlined. The schema is directly described after the message (request, reply)
-  it describes. It is convinient for simple, short messages but prevent
+  it describes. It is convenient for simple, short messages but prevent
   factorization by reusing a schema in various message with different roles.
-- an internal document reference (a "path" of nodes, under a suer-defined
-  *schemas* section). In this case, the reference is a string beginning with `$schemas`
-  keyword, followed by of path of children node concatenated with slashes (`/`).
-- an external reference ??? (another document, schema libraries... ?)
+- an internal document reference (a "path" of nodes, under a user-defined
+  *schemas* section). In this case, the reference is a string beginning with
+  `$/schemas/` keyword, followed by of path of children node concatenated with
+  slashes (`/`).
+
+  **NOTE:** *A future revision of the afbidl specification may also alow the
+  schema to be an external reference (to another document, schema libraries,
+  ...), but further work is needed to sort out a few syntactic and semantic
+  issues between JSON, YAML, and JSON-Schema, making all them collaborate
+  happily).*
 
 Here is an example of a simple **verbs** section, containing only one verb.
 Calling this verb can lead to two possible outcomes, success or failure.
@@ -442,21 +455,18 @@ register another binding as a subscriber of a given event.
 As a reminder, AGL's Application Framework Binder provides 4 main methods
 related to events, allowing to:
 
-- create an event: .. TBD
-- emit an event: ... TBD
+- create an event: `afb_deamon_make_event()`
+- emit an event: `afb_event_push()`
 - subscribe another binding as a client for an event: `afb_req_subscribe()`
-- cancel a subscription: ... TBD
+- cancel a subscription: `afb_req_unsubscribe()`
 
 Bindings API often have a subscribe/unsubscribe verb pair that wraps this
 mechanics in a push/pull-like model, but as stated above, this is not a
 requirement.
-As previous section, the **events** section is an
-`object`. Each item of this
-`object` describes an event, the key being its
-identifier, and the value an `object`, that
-MUST at least contain an item which key is `schema`, and it's value a JSON
-schema (the best practice being, once again, a reference to the **schemas**
-section).
+As previous section, the **events** section is an`object`. Each item of this
+`object` describes an event, the key being its identifier, and the value an
+`object`, that MUST at least contain an item which key is `schema`, and it's
+value a JSON-Schema (inlined, or as a reference).
 
 Here is an example of a simple **events** section, written in YAML, describing
 a unique event reporting a status (from the AGL's radio API)
@@ -493,7 +503,17 @@ Another example, using the example state machine defined above, could be:
             example-state-machine: another-state
 ```
 
-### schemas
+### the "schemas" section(s)
+
+Unlike other section keyword described above, `schemas` is NOT a reserved
+keyword.
+
+As a reminder JSON-Schemas can be defined in arbitrary sections, or directly
+inlined in the message (verb or event definition).
+
+In this document examples, we use a unique section (named **schemas** for the
+sake of clarity) as a container storing various schemas.
+
 
 
 
