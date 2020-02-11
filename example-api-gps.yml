@@ -43,8 +43,7 @@ verbs:
         reply:
             success:
                 schema: $/schemas/none
-                set-state:
-                    listening: yes
+                triggers: start-listening
 
     unsubscribe:
         description: unsubscribe to gps/gnss events
@@ -52,8 +51,7 @@ verbs:
         reply:
             success:
                 schema: $/schemas/none
-                set-state:
-                    listening: no
+                triggers: stop-signaling
 
     location:
         description: get current gps/gnss coordinates
@@ -76,23 +74,34 @@ verbs:
         reply:
             success:
                 schema: $/schemas/record/reply
-                set-state:
-                    recording: yes
+                triggers: start-recording
             _: An error can be returned when the service isn't ready
 
 events:
     location:
         schema: $/schemas/location
         when-state:
-            listening: yes
+            signaling: yes
 
 state-machines:
-    listening:
+    signaling:
+        description: "Emits events to listeners"
+        scope: session
         states: [ no, yes ]
         initial: no
+        transitions:
+            - [off, on, start-signaling]
+            - [on, off, stop-signaling]
+
     recording:
+        description: "Is recording GPS frames to file"
+        scope: global
         states: [ no, yes ]
         initial: no
+        transitions:
+            - [off, on, start-recording]
+            # NB : nothing triggers stop-recording
+            - [on, off, stop-recording]
 
 # Follow JsonSchema specification (https://json-schema.org/)
 schemas:
