@@ -33,9 +33,22 @@ read in a web browser.
 The formalism we propose in this document address those three aspect in a unified
 and (hopefully) convenient way, making the distinction kind of obsolete.
 
+### RFC 2119
+
+Especially when written in capital letters,
+
+> The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+> NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
+> "OPTIONAL" in this document are to be interpreted as described in
+> RFC 2119.
+
+**TO BE COMPLETED** : This MUST be achieved for a definitive version (1.0 and
+further).
+This SHALL be mostly correct for previous versions.
+
 ## Requirements for AGL
 
-First off: is API specification useful for AGL ?
+Well, First off: is API specification useful for AGL ?
 
 The answer is a resounding *"YES !"*
 
@@ -87,43 +100,46 @@ The formalism SHALL, at least allows to fulfill the following features:
 With the raise of distributed computing &#8212; using IPCs (InterProcess
 Communication) and/or RPCs (Remote Procedure Calls) mechanisms &#8212; urged the
 need for a way to describe the Programming Interfaces provided by an arbitrary
-node.
+computing node.
 
 Indeed, while a language like C, or Java, is self-descriptive at its source code
 level, distributed computing can imply various hardware and software technologies
-with no common standard. Furthermore, calls are often serialized into messages of
-a generic protocol messages (such has TCP, UNIX sockets, ...) with no intrinsic
-structure.
+with no common standard. Furthermore, calls are often serialized into generic
+protocol messages (such as TCP, UNIX sockets, ...) with no intrinsic structure.
 
-IDL is an attempt to address such problems. Various IDLs tried different
-approaches, and they are getting mature since years. They are now found with
-clear predominance in Web-based technologies.
+IDL is an attempt to address such a problem. Various IDLs came up with different
+approaches, and they have been maturing with years.
+
+They are now found with a clear predominance in Web-based technologies.
 
 ### Odler IDLs
 
 One of the first shot was released with the CORBA 2 standard, where the need
 for interfacing various technologies (mainly C++ and Java) led to an
 implementation-agnostic description formalism of the interfaces provided by
-system components, regardless of their respective actual implementation.
+system components ("agnostic" just meaning "regardless of their respective
+actual implementation").
+
 CORBA 2 IDL already allowed some automatic processing, but unlike modern
-IDLs made of structured data trees, CORBA IDL is a "full-featured" language
+IDLs made of structured data trees, CORBA's IDL is a "full-featured" language
 than need a compiler-like program to be interpreted (which is not easy to
 write and quite heavy to maintain). Also, for the record, CORBA used a
 specific binary format for message marshalling.
 
 By the meantime, WebServices (based on XML RPCs over HTTP, aka SOAP) and the
-next decade RESTFul APIs (so-called "Web Applications") started to spread,
-with their own needs of describing nodes interfaces for seamless
-interoperability.
+next decade RESTFul APIs (so-called "Web Applications") spread, with their own
+needs of describing node interfaces for the sake of interoperability.
 
-WSDL (Web Service Description Language) was used to describe SOAP interfaces,
-while WADL (Web Application Description Language) and RAML (Restful Application
-Modeling Language), and swagger, among others were aimed at RESTFul APIs.
+WSDL (Web Service Description Language) was used to describe SOAP interfaces.
 
-One thing that is worth to notice is that from the beginning and until now,
-each new RPC technology came up with its own specific IDL: although all IDLs
-are all sharing common concepts, no unifying / general purpose language made
-any major break-through...
+On the other hand, various IDLs like WADL (Web Application Description
+Language) and RAML (Restful Application Modeling Language), and
+swagger/OpenAPI, among others were aimed at Web Applications (RESTFul APIs).
+
+It is worth to note is that from the beginning and until now, each new RPC
+technology came up with its own specific IDL (whenever it provides one !). 
+And, although all IDLs are all sharing common concepts, no unifying / general
+purpose language made any major break-through...
 
 ### State-of-the-art IDLs
 
@@ -171,8 +187,9 @@ First of all, they generally are "languages",
 meaning that they are difficult to parse, to
 generate and to manipulate by tools.
 
-**ToBeDone :** what has been evaluated ? -> SEE SPEC-1903 - Describing the internal states and their transitions (state-machines)
-also used in automotive: Genivi Franca IDL
+**ToBeDone :** what has been evaluated ? -> SEE SPEC-1903 - Describing the internal
+states and their transitions (state-machines) also used in automotive: Genivi Franca
+IDL
 
 #### GENIVI
 
@@ -204,10 +221,10 @@ As stated above, other IDLs like OpenAPI and AsyncAPI do rely on JSON-Schema
 [7][json-schema] for this kind of task (NB : a subset extension for OpenAPI,
 a super-set for AsyncAPI).
 
-JSON-Schemas enables a normalized description of the syntax a given chuck of JSON.
-The schema itself being written in JSON, (or can be converted to) it can be, in
-turn, validated against a so-called "meta-schema". Meta-schemas are also
-JSON-Schemas, but a "special" kind as they also validates themselves.
+JSON-Schemas enables a normalized description of the syntax a given chuck of
+JSON. The schema itself being written in JSON, (or can be converted to) it can
+be, in turn, validated against a so-called "meta-schema". Meta-schemas are also
+JSON-Schemas, but a "special" kind as they also validate themselves.
 It allows to describe complex values and their constraints using a format easy
 to integrate in tools.
 
@@ -221,21 +238,26 @@ describing messages structure (request and replies "schemas").
 ### Toward even more human-friendliness
 
 JSON is a bit more human-friendly than its predecessors like XML, but can
-still be a bit tedious to deal with. Another format like YAML [8][yaml] is
-easier to deal with. As stated previously, we'll rely, internally, on JSON and
-JSON-Schemas, but it's worth noting that their is a quasi-isomorphism between
-YAML and JSON data models.
+still be a bit tedious to deal with. Another format like YAML [8][yaml] has a
+softer syntax that avoid the need of managing opening and closing tokens (often
+curly braces `{...}` ). 
+
+As stated previously, we'll rely, internally, on JSON and JSON-Schemas, but
+it's worth to note that their is a quasi-isomorphism between YAML and JSON data
+models.
 
 Comments are an exception, as strict JSON forbids them, whereas YAML welcomes
 them quite happily. If a user writes down comments in the YAML "source"
 specification file, they'll be lost while converting to JSON but it's not
-really a showstopper.
+really a show-stopper, as we don't need comments to achieve its processing.
 
 We still need to define a technical solution to report an error at the very
-line that caused it IN THE SOURCE file. Something like a "reverse lookup
-table", indexing source YAML line number, for each line in the converted JSON.
+line that caused it _in the source file_. Something like a *reverse lookup
+table"* indexing source YAML line number, for each line in the converted JSON.
 
-NOTE : It may happen that some line in the JSON doesn't have an equivalent;
+**TO BE DEFINED** : the very sdpecific tool chosen may have some impact here.
+
+**NOTE**: It may happen that some line in the JSON doesn't have an equivalent;
 for instance, a closing curly brace that closes an object will have an
 equivalent line in the YAML source. This is not problem because that type of
 line should NOT be a source of error  given the YAML is syntactically valid,
@@ -271,8 +293,10 @@ consists of an `object`, which content depends on the section it describes
 
 ### afbidl document sections
 
-API description document describe one and only API. As a reminder, a binding
-can implements multiple interfaces.
+API description document describe one and only API. 
+
+As a reminder, on the other hand an AGL bindin cann implements multiple 
+interfaces.
 
 The API description document SHOULD/MUST provide, the following sections:
 
@@ -306,7 +330,7 @@ It is `string` (made of integers concatenated with dots).
 
 As for now the value MUST BE `"0.1"`.
 
-### info (Genral Information)
+### info (General Information)
 
 This section is commonly found in most IDLs (either info or information). It
 gathers various information about the API : name, description, version, author, website...
@@ -412,7 +436,11 @@ in the **state-machines** section (see below).
 
 This section describes internal states of the binding implementing the API.
 
-As a reminder, a Finite State Machine is an abstract machine that can be in exactly one of a finite number of states at any given time. The FSM can change from one state to another in response to some inputs; the change from one state to another is called a transition. An FSM is defined by a list of its states, its initial state, and the inputs that trigger each transition.
+As a reminder, a Finite State Machine is an abstract machine that can be in
+exactly one of a finite number of states at any given time. The FSM can change
+from one state to another in response to some inputs; the change from one state
+to another is called a transition. An FSM is defined by a list of its states,
+its initial state, and the inputs that trigger each transition.
 
 Lets look at a simple example state machine (related to the example verb defined
 above):
@@ -513,6 +541,28 @@ inlined in the message (verb or event definition).
 
 In this document examples, we use a unique section (named **schemas** for the
 sake of clarity) as a container storing various schemas.
+
+## EXAMPLES
+
+Here are some example of API specifications, written in AFBIDL formalism.
+We tried to check the syntax as much as possible, but as the semantic is still
+a "Work in Progress", they have to be be considered as proposal illustration and
+nothing more (even if it intends to be contractual in a near future !)
+
+**NOTE**: The 2 first examples, GPS and Radio, have been written in YAML syntax,
+while the monitoring API as been described in a "native" JSON format.
+
+### GPS API
+
+[GPS API, link on IoTBZH afbild github](https://github.com/iotbzh/afbidl/blob/master/example-api-gps.yml)
+
+### Radio API
+
+[Radio API, link on IoTBZH afbild github](https://github.com/iotbzh/afbidl/blob/master/example-api-radio.yml)
+
+### Monitor API
+
+[Monitor API, link on IoTBZH afbild github](https://github.com/iotbzh/afbidl/blob/master/idl-monitor.json)
 
 
 
