@@ -2,23 +2,10 @@
 !#
 (use-modules (json))
 
-; logging
-(define loglevel 2)
-(define (loglevel? x) (>= loglevel x))
-(define-syntax iflog
-   (syntax-rules ()
-      ((_ level . what)
-         (when (loglevel? level) . what))))
-
-; printing
-(define (print . args) (for-each display args))
-(define-syntax dolog
-   (syntax-rules ()
-      ((_ level . what)
-         (iflog level (print . what)))))
-
 ; compute the C presentation
 (include "c-tools.scm")
+(include "logging.scm")
+(include "jsonschema.scm")
 
 ; get the arguments
 (define in-file (cadr (command-line)))
@@ -68,6 +55,8 @@
                (if (< b e) (cons (string-copy s b e) r) r))
             '()))))
    (f str (cons (- start 1) (append (string-positions-full str char start end) (list end))))))
+(define (refstr->list x) (string-split-full x #\/ 2 (string-length x)))
+(define ($ref->list x) (refstr->list (cdar x)))
 (define (is-$ref? x)
    (and
       (pair? x)
@@ -79,8 +68,6 @@
             (>= (string-length y) 2)
             (eq? (string-ref y 0) #\#)
             (eq? (string-ref y 1) #\/)))))
-(define (refstr->list x) (string-split-full x #\/ 2 (string-length x)))
-(define ($ref->list x) (refstr->list (cdar x)))
 (define (search-desc root path)
    (cond
       ((not (list? path)) #f)
@@ -123,7 +110,7 @@
             (r ($ref->list node))
             (a (assoc r desc-refs))
          )
-            (set! path-refs (cons `(,p ,r) path-refs))
+            (set! path-refs (cons (cons p r) path-refs))
             (if a
                (set-cdr! a (cons p (cdr a)))
                (set! desc-refs (cons `(,r ,p) desc-refs)))))))
@@ -143,41 +130,63 @@
 (define rec-refs '())
 (define (ref-is-rec? ref)
    (letrec (
-      (prefix? (lambda (r p)
+      (prefix? (lambda (r p) 
          (cond
             ((eq? r '()) #t)
             ((eq? p '()) #f)
             ((equal? (car r) (car p)) (prefix? (cdr r) (cdr p)))
             (else #f))))
-      (add (lambda (r c)
-         (for-each (lambda (i)
-            (if (prefix? r (car i))
-               (unless (assoc (cadr i) c) (set! c (cons (cadr i) c)))))
-            path-refs)
-         c))
+      (yadd (lambda (r pr c olpr)
+;(print "yadd R=" r "\n")
+;(print "yadd PR=" pr "\n")
+;(print "yadd C=" c "\n")
+;(print "\n")
+         (if (and (prefix? r (car pr)) (not (member (cdr pr) c)))
+            (xadd (cdr pr) olpr (cons (cdr pr) c) olpr)
+            c)))
+      (xadd (lambda (r lpr c olpr)
+;(print "xadd R=" r "\n")
+;(print "xadd LPR=" lpr "\n")
+;(print "xadd C=" c "\n")
+;(print "\n")
+         (if (pair? lpr)
+            (xadd r (cdr lpr) (yadd r (car lpr) c olpr) olpr)
+            c)))
    )
-   (assoc ref (add ref '()))))
+   (let ((z (xadd ref path-refs '() path-refs)))
+;      (print ref "->" z "<-\n")
+      (member ref z))
+   ))
 (for-each (lambda (x)
    (if (ref-is-rec? (car x))
-      (set! rec-refs (cons x rec-refs))))
+      (set! rec-refs (cons (car x) rec-refs))))
    desc-refs)
-(for-each (lambda (ref)
-   (for-each display (list "recursive ref: " ref "\n"))) rec-refs)
+(for-each (lambda (ref) (print "recursive ref: " ref "\n")) rec-refs)
 (newline)
+
+;; expand the refences recursively
 (define (expand-desc root)
    (letrec ((expand (lambda (node path)
          (cond
-            ((pair? node)
-               (do ((i node (cdr i)))
-                   ((not (pair? i)))
-                   (when (pair? (car i)) (expdesc (cdar i) (cons (caar i) path)))))
+            ((is-$ref? node)
+               (expand (search-desc root ($ref->list node)) path))
+            ((and (pair? node) (pair? (car node)) (string? (caar node)))
+               (let* ((n (caar node))
+                      (v (expand (cdar node) (cons n path)))
+                      (r (expand (cdr node) path)))
+                  (cons (cons n v) r)))
             ((vector? node)
                (do ((n (vector-length node))
+                    (v (make-vector (vector-length node)))
                     (i 0 (+ i 1)))
-                   ((>= i n))
-                   (expdesc (vector-ref node i) (cons i path))))
+                   ((>= i n) v)
+                   (vector-set! v i (expand (vector-ref node i) (cons i path)))))
+            (else node)
          ))))
       (expand root '())))
+
+;(print "BEFORE\n" (scm->json-string in-desc #:pretty #t) "\n")
+;(print "AFTER\n" (scm->json-string (expand-desc in-desc) #:pretty #t) "\n")
 
 ; some variables
 (define def-gen-vars '(
@@ -203,7 +212,7 @@
       defs))
 (define current-vars (init-vars def-gen-vars in-desc))
 (define (var x) (cdr (assq x current-vars)))
-(define (set-var! x v) (set-cdr! (assq x current-vars) (list v)))
+(define (set-var! x v) (set-cdr! (assq x current-vars) v))
 (dolog 2 "VARS: " current-vars "\n")
 (set-var! 'scope (let ((c (var 'scope))) (if (string-null? c) c (string-append (string-trim c) " "))))
 (dolog 2 "VARS: " current-vars "\n")
@@ -296,5 +305,4 @@
       ((equal? (car root) "no")    (and session? (permlist-put! 'no)))
       ((equal? (car root) "session")    (and session? (permlist-put! 'ses)))
       (else   #f))))
-
 
