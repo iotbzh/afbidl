@@ -259,50 +259,50 @@
 
 ; perms-list handles the permissions as an array
 (define perms-list '())
-; add the item in the therms-list and returns its index
+; add the item in the perms-list and returns its index
 (define (permlist-put! . item)
    (letrec ((plput! (lambda (lst itm idx)
-      (if (equal? (car lst) itm)
-    idx
-    (if (null? (cdr lst))
-       (begin
-          (set-cdr! lst (list itm))
-          (+ idx 1))
-       (plput! (cdr lst) itm (+ idx 1)))))))
+         (if (equal? (car lst) itm)
+            idx
+            (if (null? (cdr lst))
+               (begin
+                  (set-cdr! lst (list itm))
+                  (+ idx 1))
+               (plput! (cdr lst) itm (+ idx 1)))))))
       (if (null? perms-list)
-    (begin
-       (set! perms-list (list item))
-       0)
-    (plput! perms-list item 0))))
+         (begin
+            (set! perms-list (list item))
+            0)
+         (plput! perms-list item 0))))
 
 (define (declare-perms root session?)
    (letrec (
       (add (lambda (lst num)
-    (if (null? lst)
-       (list num)
-       (if (< num (car lst))
-          (cons num lst)
-          (cons (car lst) (add (cdr lst) num))))))
+         (if (null? lst)
+            (list num)
+            (if (< num (car lst))
+               (cons num lst)
+               (cons (car lst) (add (cdr lst) num))))))
       (putvec (lambda (vec sess?)
-    (let ((l '()))
-       (for-each
-          (lambda (node)
-        (let ((x (declare-perms node sess?)))
-           (if x (set! l (add l x)))))
-          (vector->list vec))
-       l)))
+         (let ((l '()))
+            (for-each
+               (lambda (node)
+                  (let ((x (declare-perms node sess?)))
+                     (if x (set! l (add l x)))))
+               (vector->list vec))
+            l)))
       (putv (lambda (tag vec sess?)
-    (do ((l (putvec vec sess?) (cdr l))
-         (r #f (if r (permlist-put! tag (car l) r) (car l))))
-        ((null? l) r)))))
-   (cond
-      ((equal? (car root) "anyOf")      (putv 'or (cdr root) #t))
-      ((equal? (car root) "allOf")      (putv 'and (cdr root) #t))
-      ((equal? (car root) "not")   (permlist-put! 'not (declare-perms (cdr root) #t)))
-      ((equal? (car root) "permission") (permlist-put! 'perm (cdr root)))
-      ((equal? (car root) "LOA")   (and session? (permlist-put! 'LOA (cdr root))))
-      ((equal? (car root) "yes")   (and session? (permlist-put! 'yes)))
-      ((equal? (car root) "no")    (and session? (permlist-put! 'no)))
-      ((equal? (car root) "session")    (and session? (permlist-put! 'ses)))
-      (else   #f))))
+         (do ((l (putvec vec sess?) (cdr l))
+              (r #f (if r (permlist-put! tag (car l) r) (car l))))
+            ((null? l) r)))))
+      (cond
+         ((equal? (car root) "anyOf")      (putv 'or (cdr root) #t))
+         ((equal? (car root) "allOf")      (putv 'and (cdr root) #t))
+         ((equal? (car root) "not")   (permlist-put! 'not (declare-perms (cdr root) #t)))
+         ((equal? (car root) "permission") (permlist-put! 'perm (cdr root)))
+         ((equal? (car root) "LOA")   (and session? (permlist-put! 'LOA (cdr root))))
+         ((equal? (car root) "yes")   (and session? (permlist-put! 'yes)))
+         ((equal? (car root) "no")    (and session? (permlist-put! 'no)))
+         ((equal? (car root) "session")    (and session? (permlist-put! 'ses)))
+         (else   #f))))
 

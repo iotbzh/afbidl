@@ -1,0 +1,255 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"$id": "urn:AGL:afbidl:schema",
+	"title": "AGL Framework Binding Interface Description",
+
+	"type": "object",
+	"required": ["afbidl", "info", "verbs"],
+	"additionalProperties": true,
+	"properties": {
+		"afbidl": {
+			"title": "version of afbidl",
+			"type": "string",
+			"enum": [ "1.0" ]
+		},
+		"info": {
+			"title": "important values describing the service",
+			"type": "object",
+			"additionalProperties": true,
+			"required": ["apiname", "version"],
+			"properties": {
+				"apiname":  { "$ref": "#/$defs/apiname" },
+				"version":  { "$ref": "#/$defs/version" },
+				"maintainer": { "type": "string" },
+				"description": { "type": "string" },
+				"author":  { "type": "string" },
+				"title":  { "type": "string" },
+				"homepage":  { "type": "string" }
+			}
+		},
+		"verbs": {
+			"title": "description of the verbs",
+			"description": "Each property of the object is the name of an available verb of the API",
+			"type": "object",
+			"additionalProperties": {
+				"title": "description of a verb",
+				"description": "each verb under condition receive a request object and reply to it",
+				"type": "object",
+				"additionalProperties": true,
+				"required": ["description", "request", "reply"],
+				"properties": {
+					"title": { "type": "string" },
+					"description": { "type": "string" },
+					"permissions": { "$ref": "#/$defs/permissions" },
+					"request": { "$ref": "#/$defs/request" },
+					"reply": { "$ref": "#/$defs/reply" }
+				}
+			}
+		},
+		"events": {
+			"title": "description of the events sent",
+			"description": "Each property of the object is the postfix name of an event",
+			"type": "object",
+			"additionalProperties": {
+				"title": "description of an event",
+				"description": "each event has a name and can carry data",
+				"type": "object",
+				"additionalProperties": true,
+				"required": ["description"],
+				"properties": {
+					"title": { "type": "string" },
+					"description": { "type": "string" },
+					"schema": { "$ref": "#/$defs/schema" },
+					"when-state":  { "$ref": "#/$defs/state/expr" }
+				}
+			}
+		},
+		"state-machines": {
+			"title": "description of the internal states, seen as state machines",
+			"description": "Internal states can be checked using when-state",
+			"type": "object",
+			"additionalProperties": {
+				"title": "description of a state-machine",
+				"description": "A state machine describe a simple state set (can be as simple as boolean)",
+				"type": "object",
+				"additionalProperties": true,
+				"required": ["description", "scope", "initial", "states", "transitions"],
+				"properties": {
+					"title": { "type": "string" },
+					"description": { "type": "string" },
+					"scope": { "enum": [ "session", "global" ] },
+					"initial": { "$ref": "#/$defs/state/name" },
+					"states":  { "$ref": "#/$defs/state/declare-states" },
+					"transitions": { "$ref": "#/$defs/transition/declare-transitions" }
+				}
+			}
+		},
+		"scenarios": {
+			
+		}
+	},
+	"$defs": {
+		"version":  { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$" },
+		"apiname":  { "type": "string", "pattern": "^[-_a-zA-Z0-9$.@:]+$" },
+		"verbname":  { "type": "string", "pattern": "^[-_a-zA-Z0-9$.@:]+$/" },
+		"request": { "$ref": "#/$defs/schema" },
+		"reply": {
+			"oneOf": [
+				{
+					"title": "description of replies",
+					"type": "object",
+					"additionalProperties": {
+						"title": "describe the reply whose status matches the name of the property",
+						"oneOf": [
+							{ "$ref": "#/$defs/schema" },
+							{
+								"type": "object",
+								"additionalProperties": true,
+								"required": ["schema"],
+								"properties": {
+									"title": { "type": "string" },
+									"description": { "type": "string" },
+									"schema": { "$ref": "#/$defs/schema" },
+									"when-state":  { "$ref": "#/$defs/state/expr" },
+									"triggers":  { "$ref": "#/$defs/trigger/list" }
+								}
+							}
+						]
+					}
+				}
+				{ "$ref": "#/$defs/schema" },
+				{ "type": "string" }
+			]
+		},
+		"permissions": true,
+		"schema": true,
+		"state": {
+			"declare-states": {
+				"title": "declare the states",
+				"oneOf": [
+					{ "$ref": "#/$defs/state/array" },
+					{
+						"type": "object",
+						"additionalProperties": {
+							"type": "object",
+							"properties": {
+								"title": { "type": "string" },
+								"description": { "type": "string" },
+								"on-enter": { "$ref": "#/$defs/trigger/list" },
+								"on-leave": { "$ref": "#/$defs/trigger/list" }
+							}
+						}
+					}
+				]
+			},
+			"name": { "type": "string" },
+			"array": {
+				"type": "array",
+				"items": { "$ref": "#/$defs/state/name" }
+			},
+			"expr": {
+				"oneOf": [
+					{ "$ref": "#/$defs/state/state-list" },
+					{ "$ref": "#/$defs/state/expr-and" },
+					{ "$ref": "#/$defs/state/expr-or" },
+					{ "$ref": "#/$defs/state/expr-not" }
+				]
+			},
+			"state-list": {
+				"type": "object",
+				"additionalProperties": {
+					"oneOf": [
+						{ "$ref": "#/$defs/state/name" },
+						{ "$ref": "#/$defs/state/array" }
+					]
+				}
+			},
+			"expr-array": {
+				"type": "array",
+				"items": { "$ref": "#/$defs/state/expr" }
+			},
+			"expr-and": {
+				"type": "object",
+				"required": ["allOf"],
+				"properties": {
+					"allOf": { "$ref": "#/$defs/state/expr-array" }
+				}
+			},
+			"expr-or": {
+				"type": "object",
+				"required": ["anyOf"],
+				"properties": {
+					"anyOf": { "$ref": "#/$defs/state/expr-array" }
+				}
+			},
+			"expr-not": {
+				"type": "object",
+				"required": ["not"],
+				"properties": {
+					"not": { "$ref": "#/$defs/state/expr" }
+				}
+			}
+		},
+		"trigger": {
+			"name": { "type": "string" },
+			"array": {
+				"type": "array",
+				"items": { "$ref": "#/$defs/trigger/name" }
+			},
+			"list": {
+				"oneOf": [
+					{ "$ref": "#/$defs/trigger/name" },
+					{ "$ref": "#/$defs/trigger/array" }
+				]
+			}
+		},
+		"transition": {
+			"declare-transitions": {
+				"oneOf": [
+					{ "$ref": "#/$defs/transition/declare-transitions-array" },
+					{ "$ref": "#/$defs/transition/declare-transitions-object" }
+				]
+			},
+			"declare-transitions-array": {
+				"type": "array",
+				"items": { "$ref": "#/$defs/transition/transition" }
+			},
+			"declare-transitions-object": {
+				"type": "object",
+				"additionalProperties": {
+					"type": "object",
+					"properties": {
+						"from": { "$ref": "#/$defs/state/name" },
+						"to": { "$ref": "#/$defs/state/name" },
+						"trigged-by": { "$ref": "#/$defs/trigger/name" }
+					}
+				}
+			},
+			"transition": {
+				"oneOf": [
+					{ "$ref": "#/$defs/transition/transition-array" },
+					{ "$ref": "#/$defs/transition/transition-object" }
+				]
+			},
+			"transition-array": {
+				"type": "array",
+				"items": [
+					{ "$ref": "#/$defs/state/name" },
+					{ "$ref": "#/$defs/state/name" },
+					{ "$ref": "#/$defs/trigger/name" }
+				]
+			},
+			"transition-object": {
+				"type": "object",
+				"required": ["from","to","trigged-by"],
+				"properties": {
+					"from": { "$ref": "#/$defs/state/name" },
+					"to": { "$ref": "#/$defs/state/name" },
+					"trigged-by": { "$ref": "#/$defs/trigger/name" },
+					"triggers":  { "$ref": "#/$defs/trigger/list" }
+				}
+			}
+
+		}
+	}
+}
