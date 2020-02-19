@@ -85,7 +85,7 @@
 			}
 		},
 		"scenarios": {
-			
+			"title": "typical scenarios of exchanges with the service"
 		}
 	},
 	"$defs": {
