@@ -11,7 +11,7 @@ info:
         via the gpsd application.
   version: "0.1"
   author: AGL
-  maintainer: Scott Rifenbark
+  maintainer: Johann Cahier (IoT.BZH)
   homepage: https://doc.automotivelinux.org/...
 
 tools:

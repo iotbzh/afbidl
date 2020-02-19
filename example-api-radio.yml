@@ -1,7 +1,7 @@
 %YAML 1.2
 ---
 
-afbidl: "1.0"
+afbidl: "0.1"
 
 info:
     apiname: radio

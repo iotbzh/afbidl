@@ -10,7 +10,7 @@
 		"afbidl": {
 			"title": "version of afbidl",
 			"type": "string",
-			"enum": [ "1.0" ]
+			"enum": [ "0.1" ]
 		},
 		"info": {
 			"title": "important values describing the service",

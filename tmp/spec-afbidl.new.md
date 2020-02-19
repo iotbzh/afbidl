@@ -183,7 +183,7 @@ But it also doesn't fit much the requirements.
 #### GENIVI Franca
 
 GENIVI Franca is very close to our expectations in terms of features, but also
-closely tighten to eclipse / Xtend.
+closely tighten to eclipse / Xtext[7][xtext].
 
 #### Others
 
@@ -217,7 +217,7 @@ payloads (validation, parsing, etc). As a matter of fact, this payload
 is encoded in JSON.
 
 As stated above, other IDLs like OpenAPI and AsyncAPI do rely on JSON-Schema
-[7][json-schema] for this kind of task (NB : a subset extension for OpenAPI,
+[8][json-schema] for this kind of task (NB : a subset extension for OpenAPI,
 a super-set for AsyncAPI).
 
 JSON-Schemas enables a normalized description of the syntax a given chuck of
@@ -237,7 +237,7 @@ describing messages structure (request and replies "schemas").
 ### Toward even more human-friendliness
 
 JSON is a bit more human-friendly than its predecessors like XML, but can
-still be a bit tedious to deal with. Another format like YAML [8][yaml] has a
+still be a bit tedious to deal with. Another format like YAML [9][yaml] has a
 softer syntax that avoid the need of managing opening and closing tokens (often
 curly braces `{...}` ). 
 
@@ -263,15 +263,15 @@ line should NOT be a source of error  given the YAML is syntactically valid,
 and the converter works fine.
 
 There are example of such YAML (and other) to JSON and vice-versa converters
-like any-json [9][any-json].
+like any-json [10][any-json].
 
 ## API description file structure
 
-The API specification document will be written in YAML, JSON or any equivalent,
-supported format. The list is still to be defined.
+The API specification document will be written in YAML, JSON or any
+equivalent, supported format. The list is still to be defined.
 
-A proposition is to use any-json [9][any-json], (see their website for the
-supported format list)
+A proposition is to use any-json (see their website for the supported format
+list)
 
 ### JSON objects
 
@@ -280,7 +280,7 @@ As a reminder, JSON defines an `object` as:
 > keys) are `strings`. Objects are intended to represent associative arrays,
 > where each key is unique within an object.
 
-*Source:* *[10][wikip-json]*
+*Source:* *[12][wikip-json]*
 
 As `objects` can be nested inside another `object` item value, they are
 convenient to represent trees.
@@ -357,7 +357,7 @@ info:
         via the gpsd application.
   version: "0.1"
   author: AGL
-  maintainer: Johan Cahier
+  maintainer: Johann Cahier
   homepage: https://doc.automotivelinux.org/...
 ```
 
@@ -579,3 +579,4 @@ while the monitoring API as been described in a "native" JSON format.
 [franca]:      https://franca.github.io/franca/                    "Franca"
 [spec1903]:    https://jira.automotivelinux.org/browse/SPEC-1903          "SPEC-1903"
 [wikip-json]:  https://en.wikipedia.org/wiki/JSON#Data_types_and_syntax   "JSON on wikipedia"
+[xtext]:       https://www.eclipse.org/Xtext/                      "Eclipse xtext"
