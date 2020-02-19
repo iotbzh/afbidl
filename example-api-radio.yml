@@ -163,7 +163,7 @@ state-machines:
         states:
             - on
             - off
-        initial: on
+        initial: off
         transitions:
             - [on, off, start-signaling ]
             - [off, on, stop-signaling ]
@@ -337,3 +337,19 @@ schemas:
         description: 
         const: null
 
+scenarios:
+   - from:
+       scanning: idle
+       signaling: off
+     sequence:
+       - { request: stop_scan, value: null }
+       - { reply: success, value: null }
+       - { request: subscribe, value: { value: station_found } }
+       - { reply: success, value: null }
+       - { request: start_scan, value: null }
+       - { reply: success, value: null }
+       - { event: station_found, value: { value: 89.4 } }
+       - { request: unsubscribe, value: { value: station_found } }
+       - { reply: success, value: null }
+       - { request: stop_scan, value: null }
+       - { reply: success, value: null }
