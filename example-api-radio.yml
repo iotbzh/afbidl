@@ -274,7 +274,6 @@ schemas:
 
         get:
             title: 
-            title: 
             type: object
             properties:
                 value: $/schemas/types/band
