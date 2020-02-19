@@ -112,9 +112,12 @@ approaches, and they have been maturing with years.
 
 They are now found with a clear predominance in Web-based technologies.
 
-### Odler IDLs
+### Older IDLs
 
-One of the first shot was released with the CORBA 2 standard, where the need
+One of the first shot was RPC language from Sun Microsystem, used for
+implementing NFS (Network File System) using RPC (Remote Procedure Call).
+
+An other early shot was released with the CORBA 2 standard, where the need
 for interfacing various technologies (mainly C++ and Java) led to an
 implementation-agnostic description formalism of the interfaces provided by
 system components ("agnostic" just meaning "regardless of their respective
@@ -158,45 +161,40 @@ All of them are using JSON (or equivalent format to describe interfaces):
 - OpenAPI 3.0 [4][openapi]
 - asyncAPI 1.2 [5][asyncapi]
 - GENIVI Franca [6][franca]
+- Others
 
 #### OpenAPI
+
+OpenAPI is not a language, unlike many IDL, but rather describes structured
+data, in JSON format.
 
 Micro service architectures on the Web mostly use OpenAPI for specifying and
 documenting their API. For this reason, it was a good candidate to evaluate.
 
 Sadly, however, the API description language in OpenAPI never provided some of
 the features required/expected by AGL for a such tool. It mainly lacks features
-to describe eventing aspects and the security model is also out-of-scope.
+to describe event aspects and the security model has mismatches.
 
-**ToBeDone:** Possible Extensions  ?
+#### AsyncAPI
 
-**ToBeRewritten:** Using OpenAPI also had the disadvantage of implying
-some twist of the model and then some ugliness
-verbosity.
+This IDL is very similar to OpenAPI. It add features for event management.
+But it also doesn't fit much the requirements.
 
-OpenAPI is not a language, unlike many IDL, but rather describes structured
-data, in JSON format.
+#### GENIVI Franca
+
+GENIVI Franca is very close to our expectations in terms of features, but also
+closely tighten to eclipse / Xtend.
 
 #### Others
 
-**ToBeRewritten:**
-Many IDL (Interface Description Language) exist
-but they rarely fit all AGL requirements.
+Many IDL (Interface Description Language) exist but they rarely fit all AGL
+requirements.
 
-First of all, they generally are "languages",
-meaning that they are difficult to parse, to
-generate and to manipulate by tools.
+First of all, they generally are "languages", meaning that they are difficult
+to parse, to generate and to manipulate by tools. 
 
-**ToBeDone :** what has been evaluated ? -> SEE SPEC-1903 - Describing the internal
-states and their transitions (state-machines) also used in automotive: Genivi Franca
-IDL
-
-#### GENIVI
-
-GENIVI Franca is very close to our expectations in terms of features, but also closely tighten to eclipse / Xtext.
-
-Introducing those in AGL mecanism as "intricate dependencies" is probably not
-a brilliant idea.
+Many of them are also type oriented and this typing is not convenient when
+the generation of code targets more than one language.
 
 ## Proposal of a new formalism
 
@@ -206,10 +204,11 @@ its lessons and some ideas stemmed from those investigations.
 First, both of them are using structured data representation to encode the API
 description, allowing JSON and more human-friendly format as YAML.
 
-As a side note, this proposal includes advanced designs introduced after some
-discussions with Joël Champeau and Philippe Dhaussy, researchers at ENSTA
-Bretagne (National Institute of Advanced Technologies of Brittany) specialized
-in system modeling and formal verification.
+This proposal includes advanced designs introduced after some discussions with
+Joël Champeau and Philippe Dhaussy, researchers at ENSTA Bretagne (National
+Institute of Advanced Technologies of Brittany) specialized in system modeling
+and formal verification: description of internal states, scenarios of interaction.
+All of this have counterpart in UML design methodology.
 
 ### JSON Schema
 
@@ -255,7 +254,7 @@ We still need to define a technical solution to report an error at the very
 line that caused it _in the source file_. Something like a *reverse lookup
 table"* indexing source YAML line number, for each line in the converted JSON.
 
-**TO BE DEFINED** : the very sdpecific tool chosen may have some impact here.
+**TO BE DEFINED** : the very specific tool chosen may have some impact here.
 
 **NOTE**: It may happen that some line in the JSON doesn't have an equivalent;
 for instance, a closing curly brace that closes an object will have an
@@ -309,7 +308,10 @@ The API description document SHOULD/MUST provide, the following sections:
   focus on "static" events, known at the binding's startup. Dynamic events
   (i.e. generated at runtime) will be addressed later on.
 - **state-machines** (optional): Internal states described as Finite State
-  Machines (state-transition automats).
+  Machines (state-transition automates).
+- **scenarios** (optional): Example of exchanges between clients and services.
+  Scenarios are intended to document typical exchanges (similarly to sequence
+  diagrams of UML)
 
 Those section names are _reserved_.
 
@@ -355,7 +357,7 @@ info:
         via the gpsd application.
   version: "0.1"
   author: AGL
-  maintainer: Scott Rifenbark
+  maintainer: Johan Cahier
   homepage: https://doc.automotivelinux.org/...
 ```
 
