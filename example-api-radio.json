@@ -1,0 +1,504 @@
+{
+    "afbidl": "0.1",
+    "info": {
+        "apiname": "radio",
+        "title": "Service for radio reception",
+        "description": "Radio service manages and reports radio configuration changes (eg. frequency, band, ....) and allows requesting infos (RDS,...)",
+        "version": "0.1",
+        "author": "AGL",
+        "maintainer": "Matt Ranostay (Konsulko)",
+        "homepage": "https://gerrit.automotivelinux.org/gerrit/apps/agl-service-radio"
+    },
+    "tools": {
+        "afb-genskel": {
+            "scope": "static",
+            "prefix": "req_",
+            "postfix": "_cb",
+            "init": "init"
+        },
+        "doc": {
+            "id": "radio-api",
+            "keywords": "radio",
+            "author": null,
+            "version": null,
+            "src_prefix": "api-radio",
+            "chapters": [
+                {
+                    "name": "Abstract",
+                    "url": "abstract.md"
+                },
+                {
+                    "name": "User Guide",
+                    "url": "userguide.md"
+                }
+            ]
+        }
+    },
+    "verbs": {
+        "frequency": {
+            "description": "Set/Get frequency (NB: we can't just get the value on request)",
+            "request": "$/schemas/frequency/set",
+            "reply": {
+                "success": "$/schemas/frequency/get",
+                "_": "Fails if frequency value is NaN (but no check on the value, nor on set_frequency() return value...)"
+            }
+        },
+        "band": {
+            "description": "Set/Get band (NB : same as frequency, no standalone get)",
+            "request": "$/schemas/band/set",
+            "reply": {
+                "success": "$/schemas/band/get",
+                "_": "Fails if the band/modulation is invalid"
+            }
+        },
+        "rds": {
+            "description": "Get Radio Data System information",
+            "request": "$/schemas/none",
+            "reply": {
+                "success": "$/schemas/rds/reply",
+                "_": "Fails if not supported by the radio backend"
+            }
+        },
+        "band_supported": {
+            "description": "Check band support (NB : no way to get list all supported bands)",
+            "request": "$/schemas/band/get",
+            "reply": {
+                "success": "$/schemas/band/supported_bands",
+                "_": "Fails if the band/modulation is invalid"
+            }
+        },
+        "frequency_range": {
+            "description": "Get frequency range (for a given band/modulation)",
+            "request": "$/schemas/band/get",
+            "reply": {
+                "success": "$/schemas/frequency/range",
+                "_": "Fails if band/modulation is unknown."
+            }
+        },
+        "frequency_step": {
+            "description": "Get frequency step",
+            "request": "$/schemas/band/get",
+            "reply": {
+                "success": "$/schemas/frequency/step"
+            }
+        },
+        "start": {
+            "description": "Start radio playback",
+            "request": "$/schemas/none",
+            "reply": {
+                "success": {
+                    "schema": "$/schemas/playing/status",
+                    "description": "playing status must be \"playing\""
+                }
+            }
+        },
+        "stop": {
+            "description": "Stop radio playback",
+            "request": "$/schemas/none",
+            "reply": {
+                "success": {
+                    "schema": "$/schemas/playing/status",
+                    "description": "playing status must be \"stopped\""
+                }
+            }
+        },
+        "scan_start": {
+            "description": "Start station scan (in a given direction)",
+            "request": "$/schemas/start_scan",
+            "reply": {
+                "success": {
+                    "when-state": {
+                        "scanning": "idle"
+                    },
+                    "triggers": "scan-start",
+                    "schema": "$/schemas/none"
+                },
+                "_": "Fails if direction is invalid"
+            }
+        },
+        "stop_scan": {
+            "description": "Stop station scan",
+            "request": "$/schemas/none",
+            "reply": {
+                "success": {
+                    "triggers": "scan-stop",
+                    "schema": "$/schemas/none"
+                }
+            }
+        },
+        "stereo_mode": {
+            "description": "Set/Get stereo_mode (NB: we can't just get the value on request)",
+            "request": "$/schemas/stereo_mode",
+            "reply": {
+                "success": {
+                    "schema": "$/schemas/stereo_mode"
+                },
+                "_": "Fails if passed an invalid stereo mode"
+            }
+        },
+        "subscribe": {
+            "description": "Request subscription to an event",
+            "request": "$/schemas/subscription",
+            "reply": {
+                "success": {
+                    "schema": "$/schemas/none",
+                    "triggers": "start-signaling"
+                }
+            }
+        },
+        "unsubscribe": {
+            "description": "Cancel subscription to an event",
+            "request": "$/schemas/subscription",
+            "reply": {
+                "success": {
+                    "schema": "$/schemas/none",
+                    "triggers": "stop-signaling"
+                }
+            }
+        }
+    },
+    "state-machines": {
+        "scanning": {
+            "description": "Indicates if the backend is currently scanning frequency",
+            "scope": "global",
+            "states": [
+                "idle",
+                "progress"
+            ],
+            "initial": "idle",
+            "transitions": {
+                "scan-start-transition": {
+                    "from": "idle",
+                    "to": "progress",
+                    "trigged-by": "start-scan"
+                },
+                "scan-stop-transition": {
+                    "from": "idle",
+                    "to": "progress",
+                    "trigged-by": "stop-scan"
+                }
+            }
+        },
+        "signaling": {
+            "description": "Emits events to listeners",
+            "scope": "session",
+            "states": [
+                "on",
+                "off"
+            ],
+            "initial": "off",
+            "transitions": [
+                [
+                    "on",
+                    "off",
+                    "start-signaling"
+                ],
+                [
+                    "off",
+                    "on",
+                    "stop-signaling"
+                ]
+            ]
+        }
+    },
+    "events": {
+        "frequency": {
+            "description": "event emitted when a new frequency is tuned (TBC)",
+            "schema": "$/schemas/frequency/event",
+            "when-state": {
+                "signaling": "on"
+            }
+        },
+        "station_found": {
+            "description": "event emitted when a valid station is tuned (frequency with a good S/N ration ? TBC)",
+            "schema": "$/schemas/frequency/event",
+            "when-state": {
+                "signaling": "on",
+                "scanning": "progress"
+            }
+        },
+        "status": {
+            "description": "event emitted when playing status changes.",
+            "schema": "$/schemas/playing/status",
+            "when-state": {
+                "signaling": "on"
+            }
+        }
+    },
+    "schemas": {
+        "types": {
+            "band": {
+                "title": "Frequency band (modulation)",
+                "description": "Enumeration of valid frquency bands/modulations values as string",
+                "type": "string",
+                "enum": [
+                    "AM",
+                    "FM"
+                ]
+            },
+            "stereo_mode": {
+                "title": "Stereo mode",
+                "description": "Enumeration of valid stereo modes",
+                "type": "string",
+                "enum": [
+                    "mono",
+                    "stereo"
+                ]
+            }
+        },
+        "frequency": {
+            "set": {
+                "title": null,
+                "description": "object used to set the tuned frequency",
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "title": "frequency value",
+                        "description": "desired frequency to be tuned",
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "value"
+                ]
+            },
+            "get": {
+                "title": null,
+                "description": "object used to retreive tuned frequency",
+                "type": "object",
+                "properties": {
+                    "frequency": {
+                        "title": "frequency value",
+                        "description": "frequency currently tuned",
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "frequency"
+                ]
+            },
+            "range": {
+                "title": null,
+                "description": "object used to retreive minimum and maximum frequency for a given modulation",
+                "type": "object",
+                "properties": {
+                    "min": {
+                        "title": "Minimal frequency for the range",
+                        "type": "number"
+                    },
+                    "max": {
+                        "title": "Maximal frequency for the range",
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "min",
+                    "max"
+                ]
+            },
+            "step": {
+                "title": null,
+                "description": "object used to retreive the increment between 2 tunable frequencies",
+                "type": "object",
+                "properties": {
+                    "step": {
+                        "title": "frequency step",
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "step"
+                ]
+            },
+            "event": {
+                "title": null,
+                "description": null,
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "title": "frequency value",
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "value"
+                ]
+            }
+        },
+        "band": {
+            "set": {
+                "title": null,
+                "description": null,
+                "type": "object",
+                "properties": {
+                    "value": "$/schemas/types/band"
+                },
+                "required": [
+                    "value"
+                ]
+            },
+            "get": {
+                "title": null,
+                "type": "object",
+                "properties": {
+                    "value": "$/schemas/types/band"
+                },
+                "required": [
+                    "value"
+                ]
+            },
+            "supported_bands": {
+                "title": null,
+                "description": "list of bands/modulations supported by the radio backend",
+                "type": "array",
+                "contains": "$/schemas/types/band"
+            }
+        },
+        "rds": {
+            "reply": {
+                "success": {
+                    "title": null,
+                    "description": "object used to retreive Radio Data System information",
+                    "type": "object",
+                    "properties": {
+                        "rds": {
+                            "title": "\"playing now\" informations",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "rds"
+                    ]
+                }
+            }
+        },
+        "playing": {
+            "status": {
+                "title": null,
+                "description": "Object used to return the playing status",
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "enum": [
+                            "playing",
+                            "stopped"
+                        ]
+                    }
+                },
+                "required": [
+                    "value"
+                ]
+            }
+        },
+        "start_scan": {
+            "request": {
+                "title": null,
+                "description": "object used to pass the direction of the frequency scan",
+                "type": "object",
+                "properties": {
+                    "direction": {
+                        "enum": [
+                            "forward, backward"
+                        ]
+                    }
+                },
+                "required": [
+                    "direction"
+                ]
+            }
+        },
+        "stereo_mode": {
+            "title": null,
+            "description": "Object used to pass a stereo mode (NB : stereo is either true or false. Polyphony is more general, does it make sense here ?)",
+            "type": "object",
+            "properties": {
+                "value": "$/schemas/types/stereo_mode"
+            },
+            "required": [
+                "value"
+            ]
+        },
+        "subscription": {
+            "title": null,
+            "description": "describes a subscription to an event",
+            "type": "object",
+            "properties": {
+                "value": {
+                    "enum": [
+                        "frequency",
+                        "station_found",
+                        "status"
+                    ]
+                }
+            },
+            "required": [
+                "value"
+            ]
+        },
+        "none": {
+            "title": "no value, just null",
+            "description": null,
+            "const": null
+        }
+    },
+    "scenarios": [
+        {
+            "from": {
+                "scanning": "idle",
+                "signaling": "off"
+            },
+            "sequence": [
+                {
+                    "request": "stop_scan",
+                    "value": null
+                },
+                {
+                    "reply": "success",
+                    "value": null
+                },
+                {
+                    "request": "subscribe",
+                    "value": {
+                        "value": "station_found"
+                    }
+                },
+                {
+                    "reply": "success",
+                    "value": null
+                },
+                {
+                    "request": "start_scan",
+                    "value": null
+                },
+                {
+                    "reply": "success",
+                    "value": null
+                },
+                {
+                    "event": "station_found",
+                    "value": {
+                        "value": 89.4
+                    }
+                },
+                {
+                    "request": "unsubscribe",
+                    "value": {
+                        "value": "station_found"
+                    }
+                },
+                {
+                    "reply": "success",
+                    "value": null
+                },
+                {
+                    "request": "stop_scan",
+                    "value": null
+                },
+                {
+                    "reply": "success",
+                    "value": null
+                }
+            ]
+        }
+    ]
+}

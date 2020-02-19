@@ -1,17 +1,18 @@
-%YAML 1.3
+%YAML 1.2
 ---
+
 afbidl: "0.1"
 
 info:
-  apiname: radio
-  title: Service for radio reception
-  description:
-        Radio service manages and reports radio configuration changes
-        (eg. frequency, band, ....) and allows requesting infos (RDS,...)
-  version: "0.1"
-  author: AGL
-  maintainer: Matt Ranostay	(Konsulko)
-  homepage: https://gerrit.automotivelinux.org/gerrit/apps/agl-service-radio
+    apiname: radio
+    title: Service for radio reception
+    description:
+            "Radio service manages and reports radio configuration changes
+            (eg. frequency, band, ....) and allows requesting infos (RDS,...)"
+    version: "0.1"
+    author: AGL
+    maintainer: Matt Ranostay (Konsulko)
+    homepage: https://gerrit.automotivelinux.org/gerrit/apps/agl-service-radio
 
 tools:
 
@@ -21,74 +22,78 @@ tools:
         postfix: _cb
         init: init
 
-    #doc:
-        #id: radio-api
-        #keywords: radio
-        #author:
-        #version:
-        #src_prefix: api-radio
-        #chapters:
-        #- name: Abstract
-          #url: abstract.md
-        #- name: User Guide
-          #url: userguide.md
+    doc:
+        id: radio-api
+        keywords: radio
+        author:
+        version:
+        src_prefix: api-radio
+        chapters:
+        - name: Abstract
+          url: abstract.md
+        - name: User Guide
+          url: userguide.md
 
 
 verbs:
-
     frequency:
-        description: Get/Set frequency
+        description: "Set/Get frequency (NB: we can't just get the value on request)"
         request: $/schemas/frequency/set
         reply:
             success: $/schemas/frequency/get
-            failure: $/schemas/none
+            _: Fails if frequency value is NaN (but no check on the value, nor on set_frequency() return value...)
 
     band:
-        description: Set/Get band
+        description: "Set/Get band (NB : same as frequency, no standalone get)"
         request: $/schemas/band/set
         reply:
-            success:
-                schema: $/schemas/band/get
-            _: fails if the band is invalid
+            success: $/schemas/band/get
+            _: Fails if the band/modulation is invalid
 
     rds:
-        description: Get RDS information
+        description: "Get Radio Data System information"
         request: $/schemas/none
         reply:
-            success: $/schemas/rds/replay
-            _: may fail if not supported by the radio backend
+            success: $/schemas/rds/reply
+            _: Fails if not supported by the radio backend
 
     band_supported:
-        description: Check band support
-        request: $/schemas/band/request
+        description: "Check band support (NB : no way to get list all supported bands)"
+        request: $/schemas/band/get
         reply:
             success: $/schemas/band/supported_bands
-            _: dickhead !!! faceplam... fails if the band is invalid
+            _: Fails if the band/modulation is invalid
 
     frequency_range:
-        description: Get frequency range (given a modulation)
-        request: $/schemas/band/request
+        description: "Get frequency range (for a given band/modulation)"
+        request: $/schemas/band/get
         reply:
             success: $/schemas/frequency/range
-            _: fails if modulation is unknown.
+            _: Fails if band/modulation is unknown.
 
     frequency_step:
-        description: Get frequency step
-        request: $/schemas/band/request
-        reply: $/schemas/frequency/step
+        description: "Get frequency step"
+        request: $/schemas/band/get
+        reply:
+            success: $/schemas/frequency/step
 
     start:
-        description: Start radio playback
+        description: "Start radio playback"
         request: $/schemas/none
-        reply: $/schemas/start/reply
-
+        reply:
+            success:
+                schema: $/schemas/playing/status
+                description: "playing status must be \"playing\""
     stop:
-        description: Stop radio playback
+        description: "Stop radio playback"
         request: $/schemas/none
-        reply: $/schemas/stop/reply
+        reply:
+            success:
+                schema: $/schemas/playing/status
+                description: "playing status must be \"stopped\""
 
     scan_start:
-        description: Start station scan
+        description: "Start station scan (in a given direction)"
         request: $/schemas/start_scan
         reply:
             success:
@@ -96,80 +101,91 @@ verbs:
                     scanning: idle
                 triggers: scan-start
                 schema: $/schemas/none
-            _: Fail if direction is invalid
+            _: Fails if direction is invalid
 
     stop_scan:
-        description: Stop station scan
+        description: "Stop station scan"
         request: $/schemas/none
         reply:
-            triggers: scan-stop
-            schema: $/schemas/none
-
+            success:
+                triggers: scan-stop
+                schema: $/schemas/none
 
     stereo_mode:
-        description: Set/Get stereo_mode
+        description: "Set/Get stereo_mode (NB: we can't just get the value on request)"
         request: $/schemas/stereo_mode
         reply:
             success:
                 schema: $/schemas/stereo_mode
-            _: fails if passed an invalid stereo mode
+            _: Fails if passed an invalid stereo mode
 
 
     subscribe:
-        description: Subscribe for an event
-        request: $/schemas/subscribe/subscription
+        description: "Request subscription to an event"
+        request: $/schemas/subscription
         reply:
-            schema: $/schemas/none
-            triggers: start-listening
+            success:
+                schema: $/schemas/none
+                triggers: start-signaling
 
     unsubscribe:
-        description: Unsubscribe for an event
-        request: $/schemas/subscribe/subscription
+        description: "Cancel subscription to an event"
+        request: $/schemas/subscription
         reply:
-            schema: $/schemas/none
-            triggers: stop-listening
+            success:
+                schema: $/schemas/none
+                triggers: stop-signaling
 
 
 state-machines:
     scanning:
+        description: "Indicates if the backend is currently scanning frequency"
+        scope: global
         states: [ idle, progress ]
         initial: idle
         transitions:
+            scan-start-transition:
+                     from: idle
+                     to: progress
+                     trigged-by: start-scan
+            scan-stop-transition:
+                     from: idle
+                     to: progress
+                     trigged-by: stop-scan
+            # Just for the record: the following compact syntax is
+            # equivalent to the developped syntax above
             #- [ idle, progress, scan-start ]
             #- [ progress, idle, scan-complete ]
-            - {name: scan-start-transition,
-                     from: idle,
-                     to: progress,
-                     trigged-by: start-scan }
-            - {name: scan-stop-transition,
-                     from: idle,
-                     to: progress,
-                     trigged-by: stop-scan }
 
-    listening:
+    signaling:
+        description: "Emits events to listeners"
+        scope: session
         states:
             - on
             - off
-        initial: on
+        initial: off
         transitions:
-            - [on, off, start-listening ]
-            - [off, on, stop-listening ]
+            - [on, off, start-signaling ]
+            - [off, on, stop-signaling ]
 
 
 events:
     frequency:
-        schema: $/schemas/location
+        description: "event emitted when a new frequency is tuned (TBC)"
+        schema: $/schemas/frequency/event
         when-state:
-            listening: on
+            signaling: on
     station_found:
-        schema: $/schemas/location
+        description: "event emitted when a valid station is tuned (frequency with a good S/N ration ? TBC)"
+        schema: $/schemas/frequency/event
         when-state:
-            listening: on
+            signaling: on
             scanning: progress
     status:
-        schema: $/schemas/location
+        description: "event emitted when playing status changes."
+        schema: $/schemas/playing/status
         when-state:
-            listening: on
+            signaling: on
 
 
 # Follow JsonSchema specification (https://json-schema.org/)
@@ -177,32 +193,44 @@ schemas:
     types:
         band:
             title: Frequency band (modulation)
+            description: "Enumeration of valid frquency bands/modulations values as string"
             type: string
             enum: ["AM", "FM"]
 
         stereo_mode:
             title: Stereo mode
+            description: "Enumeration of valid stereo modes"
             type: string
             enum: ["mono", "stereo"]
 
     frequency:
+        # we could unify get, set and event if they all had the same property (for instance : value)
+        # also description would be much simplier : "object used to pass a frequency value"
         set:
+            title:
+            description: "object used to set the tuned frequency"
             type: object
             properties:
                 value:
                     title: frequency value
+                    description: "desired frequency to be tuned"
                     type: number
             required: [ value ]
 
         get:
+            title:
+            description: "object used to retreive tuned frequency"
             type: object
             properties:
                 frequency:
                     title: frequency value
+                    description: "frequency currently tuned"
                     type: number
             required: [ frequency ]
 
         range:
+            title:
+            description: "object used to retreive minimum and maximum frequency for a given modulation"
             type: object
             properties:
                 min:
@@ -214,6 +242,8 @@ schemas:
             required: [ min, max ]
 
         step:
+            title:
+            description: "object used to retreive the increment between 2 tunable frequencies"
             type: object
             properties:
                 step:
@@ -221,27 +251,45 @@ schemas:
                     type: number
             required: [ step ]
 
+        event:
+            title:
+            description:
+            type: object
+            properties:
+                value:
+                    title: frequency value
+                    type: number
+            required: [ value ]
+
     band:
+        # same here, we could unify set and get.
+        # not done yet to stay coherent with frequency schemas
         set:
+            title: 
+            description:
             type: object
             properties:
                 value: $/schemas/types/band
             required: [ value ]
 
         get:
+            title: 
             type: object
             properties:
                 value: $/schemas/types/band
             required: [ value ]
 
         supported_bands:
+            title: 
+            description: "list of bands/modulations supported by the radio backend"
             type: array
             contains: $/schemas/types/band
-            required: [ value ]
 
     rds:
         reply:
             success:
+                title: 
+                description: "object used to retreive Radio Data System information"
                 type: object
                 properties:
                     rds:
@@ -249,33 +297,35 @@ schemas:
                         type: string
                 required: [ rds ]
 
-    start_stop_reply:
-        reply: #useless ?
+    playing:
+        status:
+            title: 
+            description: "Object used to return the playing status"
             type: object
             properties:
                 value: { enum: ["playing", "stopped" ] }
             required: [ value ]
-    stop:
-        reply: #useless ?
-            type: object
-            properties:
-                value: { const: "stopped" }
-            required: [ value ]
 
     start_scan:
         request:
+            title: 
+            description: "object used to pass the direction of the frequency scan"
             type: object
             properties:
                 direction: { enum: ["forward, backward" ] }
             required: [ direction ]
 
     stereo_mode:
+        title: 
+        description: "Object used to pass a stereo mode (NB : stereo is either true or false. Polyphony is more general, does it make sense here ?)"
         type: object
         properties:
             value: $/schemas/types/stereo_mode
         required: [ value ]
 
     subscription:
+        title: 
+        description: "describes a subscription to an event"
         type: object
         properties:
             value: { enum: ["frequency", "station_found", "status" ] }
@@ -283,4 +333,22 @@ schemas:
 
     none:
         title: no value, just null
+        description: 
         const: null
+
+scenarios:
+   - from:
+       scanning: idle
+       signaling: off
+     sequence:
+       - { request: stop_scan, value: null }
+       - { reply: success, value: null }
+       - { request: subscribe, value: { value: station_found } }
+       - { reply: success, value: null }
+       - { request: start_scan, value: null }
+       - { reply: success, value: null }
+       - { event: station_found, value: { value: 89.4 } }
+       - { request: unsubscribe, value: { value: station_found } }
+       - { reply: success, value: null }
+       - { request: stop_scan, value: null }
+       - { reply: success, value: null }
