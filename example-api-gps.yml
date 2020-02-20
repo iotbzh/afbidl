@@ -56,7 +56,8 @@ verbs:
         description: get current gps/gnss coordinates
         request: $/schemas/none
         reply:
-            success: $/schemas/location
+            success:
+                schema: $/schemas/location
             _: An error can be returned when the service isn't ready
 
     record:
@@ -78,29 +79,30 @@ verbs:
 
 events:
     location:
+        description: reports current location
         schema: $/schemas/location
         when-state:
-            signaling: yes
+            signaling: "yes"
 
 state-machines:
     signaling:
         description: "Emits events to listeners"
         scope: session
-        states: [ no, yes ]
-        initial: no
+        states: [ "no", "yes" ]
+        initial: "no"
         transitions:
-            - [off, on, start-signaling]
-            - [on, off, stop-signaling]
+            - ["no", "yes", start-signaling]
+            - ["yes", "no", stop-signaling]
 
     recording:
         description: "Is recording GPS frames to file"
         scope: global
-        states: [ no, yes ]
-        initial: no
+        states: [ "off", "on" ]
+        initial: "off"
         transitions:
-            - [off, on, start-recording]
+            - ["off", "on", start-recording]
             # NB : nothing triggers stop-recording
-            - [on, off, stop-recording]
+            - ["on", "off", stop-recording]
 
 # Follow JsonSchema specification (https://json-schema.org/)
 schemas:
