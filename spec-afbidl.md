@@ -294,12 +294,12 @@ consists of an `object`, which content depends on the section it describes
 
 API description document describe one and only API. 
 
-As a reminder, on the other hand an AGL bindin cann implements multiple 
+As a reminder, on the other hand an AGL binding can implement multiple
 interfaces.
 
 The API description document SHOULD/MUST provide, the following sections:
 
-- **afbidl** (mandatory): identifies afbidl document type and specify version.
+- **afbidl** (mandatory): Identifies afbidl document type and specify version.
 - **info** (mandatory): General information about the API.
 - **tools** (optional): Specific information aimed to automatic processing tools
 - **verbs** (mandatory): List of API verbs, for each, gives the request and
@@ -315,8 +315,8 @@ The API description document SHOULD/MUST provide, the following sections:
 
 Those section names are _reserved_.
 
-User can still add arbitrary sections, with arbitrary names, AS LONG AS this
-name do not match one the keywords listed above.
+Users can still add sections using arbitrary names, AS LONG AS these
+names do not match one the keywords listed above.
 
 In examples provided below, we define a **schemas** section that gathers and
 organizes the various schemas used to describes **verbs** and **events**.
@@ -391,7 +391,7 @@ Those options may be superseded by command line option when invoking the tool.
 ### verbs
 
 This section describes the verbs exposed by the API, and implemented in a
-binding. Each item describe one (and only one verb).
+binding. Each item describes a single verb.
 Each item key is the verb name (identifier).
 Its value is an `object`, describing:
 
