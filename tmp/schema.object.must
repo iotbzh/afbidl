@@ -1,7 +1,0 @@
-<p>OBJECT:</p>
-<dl>
-{{#properties.*}}
-        <dt>{{*}}</dt>
-        <dd>{{#.}}{{>schema.must}}{{/.}}</dd>
-{{/properties.*}}
-</dl>
