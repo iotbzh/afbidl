@@ -1,3 +1,4 @@
+
 /*
 ; compute the C presentation of the string of 'value
 ; prefix is the string to prepend at the beginning
@@ -16,32 +17,32 @@ function C_string_fmt(value, prefix, width) {
 	}
 	function process(str, fun) {
 		var w = 0;
-		function start(fun) {
+		function start(f) {
 			w = 0;
-			for(var i = 0; i < s.length(); i++)
-				fun(s.charAt(i));
-			fun('"');
+			for(var i = 0; i < prefix.length; i++)
+				f(prefix.charAt(i));
+			f('"');
 		}
-		function stop(fun) {
-			fun('"');
+		function stop(f) {
+			f('"');
 		}
-		function start_if(fun, limit) {
+		function start_if(f, limit) {
 			if (w >= limit) {
-				stop(fun);
+				stop(f);
 				fun('\n');
-				start(fun);
+				start(f);
 			}
 		}
-		function emit(c, fun) {
-			fun(c);
+		function emit(c, f) {
+			f(c);
 			w++;
 		}
-		function width_emit(c, fun) {
-			start_if(fun, width);
-			esc(c, function(c) { emit(c, fun); });
+		function width_emit(c, f) {
+			start_if(f, width);
+			esc(c, function(c) { emit(c, f); });
 		}
 		start(fun);
-		for(var i = 0; i < str.length(); i++)
+		for(var i = 0; i < str.length; i++)
 			width_emit(str.charAt(i), fun);
 		stop(fun);
 	}
@@ -59,8 +60,10 @@ function C_string_null(value) { return value ? C_string(value) : "NULL"; }
 
 // return a C compatible identifier for name
 function C_ify(name) {
-	for(var i = 0; i < str.length(); i++)
-        (string-map (lambda (c)
-                (if (or (char-alphabetic? c) (char-numeric? c)) c #\_))
-                name))
+	return name.replace(/\W/g, "_");
 }
+
+exports.string = C_string;
+exports.stringNull = C_string_null;
+exports.stringFmt = C_string_fmt;
+exports.id = C_ify;
