@@ -253,36 +253,33 @@
    "      .glob = 0\n"
    "   },\n")))
 (print
-   "   { .callback = NULL } /* END OF THE VERB ARRAY */\n"
+   "   { .verb = NULL, .callback = NULL } /* END OF THE VERB ARRAY */\n"
    "};\n"
    "\n")
 
 ; perms-list handles the permissions as an array
 (define perms-list '())
+
 ; add the item in the perms-list and returns its index
 (define (permlist-put! . item)
-   (letrec ((plput! (lambda (lst itm idx)
-         (if (equal? (car lst) itm)
-            idx
-            (if (null? (cdr lst))
-               (begin
-                  (set-cdr! lst (list itm))
-                  (+ idx 1))
-               (plput! (cdr lst) itm (+ idx 1)))))))
+   (letrec ((plput! (
+      lambda (lst itm idx)
+         (cond
+            ((equal? (car lst) itm) idx)
+            ((null? (cdr lst)) (begin (set-cdr! lst (list itm)) (+ idx 1)))
+            (else  (plput! (cdr lst) itm (+ idx 1))))))))
       (if (null? perms-list)
-         (begin
-            (set! perms-list (list item))
-            0)
-         (plput! perms-list item 0))))
+         (begin (set! perms-list (list item)) 0)
+         (plput! perms-list item 0)))
 
 (define (declare-perms root session?)
    (letrec (
-      (add (lambda (lst num)
-         (if (null? lst)
-            (list num)
-            (if (< num (car lst))
-               (cons num lst)
-               (cons (car lst) (add (cdr lst) num))))))
+      (add (lambda (lst num) ; add num and return the sorted list
+         (cond
+            ((null? lst)       (list num))
+            ((= num (car lst)) lst)
+            ((< num (car lst)) (cons num lst))
+            (else              (cons (car lst) (add (cdr lst) num))))))
       (putvec (lambda (vec sess?)
          (let ((l '()))
             (for-each
@@ -298,11 +295,15 @@
       (cond
          ((equal? (car root) "anyOf")      (putv 'or (cdr root) #t))
          ((equal? (car root) "allOf")      (putv 'and (cdr root) #t))
-         ((equal? (car root) "not")   (permlist-put! 'not (declare-perms (cdr root) #t)))
+         ((equal? (car root) "not")        (permlist-put! 'not (declare-perms (cdr root) #t)))
          ((equal? (car root) "permission") (permlist-put! 'perm (cdr root)))
-         ((equal? (car root) "LOA")   (and session? (permlist-put! 'LOA (cdr root))))
-         ((equal? (car root) "yes")   (and session? (permlist-put! 'yes)))
-         ((equal? (car root) "no")    (and session? (permlist-put! 'no)))
+         ((equal? (car root) "LOA")        (and session? (permlist-put! 'LOA (cdr root))))
+         ((equal? (car root) "yes")        (and session? (permlist-put! 'yes)))
+         ((equal? (car root) "no")         (and session? (permlist-put! 'no)))
          ((equal? (car root) "session")    (and session? (permlist-put! 'ses)))
          (else   #f))))
 
+; print the predeclaration of the verbs
+(for-each-verb (lambda (name desc)
+   (print (var 'scope) "void " (var 'prefix) (C-ify name) (var 'postfix) "(afb_req req);\n")))
+(newline)
