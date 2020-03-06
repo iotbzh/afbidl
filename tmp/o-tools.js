@@ -89,21 +89,29 @@ ONode.prototype = {
          * iteration over the expanded nodes
          * fun is called for each node
          */
-        forall: function(fun) {
+        forEach: function(fun, rec) {
                 var z = fun(this);
                 if (z !== "stop") {
                         var u = undefined;
-                        var c = this.children;
-                        if (z !== "continue" && c) {
-                                for(var i in c) {
-                                        u = c[i].forall(fun);
-                                        if (u === "stop")
-                                                break;
-                                }
+                        if (z !== "continue" && (rec === undefined || rec === true || Number(rec) > 1)) {
+                                var rerec = rec === undefined || rec === true ? true : (Number(rec) - 1);
+                                u = this.forEachChild(fun, rerec);
                         }
                         z = u;
                 }
                 return z;
+        },
+
+        forEachChild: function(fun, rec) {
+                var u = undefined;
+                var c = this.children;
+                var rerec = rec === true ? true : (Number(rec) - 1);
+                for(var i in c) {
+                        u = c[i].forEach(fun, rerec);
+                        if (u === "stop")
+                                break;
+                }
+                return u;
         },
 
         /*
@@ -117,7 +125,16 @@ ONode.prototype = {
                 if (j > arr.length)
                         return undefined;
                 this.expand(false);
-                return arr[j] in this.children ? this.children[arr[j]].at(arr, j+1) : undefined;
+                if (arr[j] in this.children)
+                        return this.children[arr[j]].at(arr, j+1);
+                if (this.anchor && this.anchor.node)
+                        return this.anchor.node.at(arr, j);
+                return undefined;
+        },
+
+        nodeAt: function(arr, i) {
+                var n = this.at(arr, i);
+                return n ? n.node : n;
         },
 
         /*
@@ -150,7 +167,7 @@ function ODoc(root) {
         var anchors = {};
         this.links = links;
         this.anchors = anchors;
-        this.root.forall(function(n){
+        this.root.forEach(function(n){
                 var r = isRef(n.node);
                 if (r) {
                         links.push(n);
@@ -207,8 +224,12 @@ ODoc.prototype = {
         },
 
         nodeAt: function(path) {
+                return this.root.nodeAt(path2array(path));
+        },
+
+        forEachChild: function(path, fun, rec) {
                 var n = this.at(path);
-                return n ? n.node : n;
+                return n ? n.forEachChild(fun, rec) : undefined;
         }
 };
 

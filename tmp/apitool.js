@@ -55,116 +55,34 @@ var vars = {};
 });
 
 
-function forEachOfDoc(path, fun) {
-   var r = doc.at(path);
-   if (r) {
-      r.expand(false);
-      for (let i in r.children)
-         fun(r.children[i]);
-    }
-}
-function forEachVerb(fun) { forEachOfDoc(["verbs"], fun); }
-function forEachEvent(fun) { forEachOfDoc(["events"], fun); }
-function forEachStateMachine(fun) { forEachOfDoc(["state-machines"], fun); }
+function forEachVerb(fun) { doc.forEachChild(["verbs"], fun); }
+function forEachEvent(fun) { doc.forEachChild(["events"], fun); }
+function forEachStateMachine(fun) { doc.forEachChild(["state-machines"], fun); }
 
 
+function funOfVerb(verb) { return vars['prefix'] + ctools.id(verb) +  vars['postfix']; }
 
-
-
+// declare ver implementation
 forEachVerb(function(n) {
-   console.log(vars['scope'] + " void " + vars['prefix'] + ctools.id(n.name) +  vars['postfix'] + "(afb_req req);\n");
+   console.log(vars['scope'] + " void " + funOfVerb(n.name) + "(afb_req req);\n");
 });
 
-
-
-
-
-
-
-
-
-/*
-(for-each-verb (lambda (name desc)
-   (print "VERB: " name "\n")))
-(newline)
-
-(for-each-event (lambda (name desc) (for-each display (list "EVENT: " name "\n"))))
-(newline)
-(for-each-state-machine (lambda (name desc) (for-each display (list "SM: " name "\n"))))
-(newline)
-; print the predeclaration of the verbs
-(for-each-verb (lambda (name desc)
-   (print (var 'scope) "void " (var 'prefix) (C-ify name) (var 'postfix) "(afb_req req);\n")))
-(newline)
-
-; print the array of verbs
-(print
-   "\n"
-   "static const struct afb_verb_v3 _afb_verbs_" (C-ify (var 'api)) "[] =\n"
-   "{\n")
-(for-each-verb (lambda (name desc) (print
-   "   {\n"
-   "      .verb = " (C-string name) ",\n"
-   "      .callback = " (var 'prefix) (C-ify name) (var 'postfix) ",\n"
-   "      .info = " (C-string-null (search-desc desc '(description))) ",\n"
-   "      .auth = NULL,\n"
-   "      .vcbdata = NULL,\n"
-   "      .session = 0,\n"
-   "      .glob = 0\n"
-   "   },\n")))
-(print
-   "   { .verb = NULL, .callback = NULL } /* END OF THE VERB ARRAY * /\n"
-   "};\n"
-   "\n")
-
-; perms-list handles the permissions as an array
-(define perms-list '())
-
-; add the item in the perms-list and returns its index
-(define (permlist-put! . item)
-   (letrec ((plput! (
-      lambda (lst itm idx)
-         (cond
-            ((equal? (car lst) itm) idx)
-            ((null? (cdr lst)) (begin (set-cdr! lst (list itm)) (+ idx 1)))
-            (else  (plput! (cdr lst) itm (+ idx 1))))))))
-      (if (null? perms-list)
-         (begin (set! perms-list (list item)) 0)
-         (plput! perms-list item 0)))
-
-(define (declare-perms root session?)
-   (letrec (
-      (add (lambda (lst num) ; add num and return the sorted list
-         (cond
-            ((null? lst)       (list num))
-            ((= num (car lst)) lst)
-            ((< num (car lst)) (cons num lst))
-            (else              (cons (car lst) (add (cdr lst) num))))))
-      (putvec (lambda (vec sess?)
-         (let ((l '()))
-            (for-each
-               (lambda (node)
-                  (let ((x (declare-perms node sess?)))
-                     (if x (set! l (add l x)))))
-               (vector->list vec))
-            l)))
-      (putv (lambda (tag vec sess?)
-         (do ((l (putvec vec sess?) (cdr l))
-              (r #f (if r (permlist-put! tag (car l) r) (car l))))
-            ((null? l) r)))))
-      (cond
-         ((equal? (car root) "anyOf")      (putv 'or (cdr root) #t))
-         ((equal? (car root) "allOf")      (putv 'and (cdr root) #t))
-         ((equal? (car root) "not")        (permlist-put! 'not (declare-perms (cdr root) #t)))
-         ((equal? (car root) "permission") (permlist-put! 'perm (cdr root)))
-         ((equal? (car root) "LOA")        (and session? (permlist-put! 'LOA (cdr root))))
-         ((equal? (car root) "yes")        (and session? (permlist-put! 'yes)))
-         ((equal? (car root) "no")         (and session? (permlist-put! 'no)))
-         ((equal? (car root) "session")    (and session? (permlist-put! 'ses)))
-         (else   #f))))
-
-; print the predeclaration of the verbs
-(for-each-verb (lambda (name desc)
-   (print (var 'scope) "void " (var 'prefix) (C-ify name) (var 'postfix) "(afb_req req);\n")))
-(newline)
-*/
+// print the array of verbs
+console.log("");
+console.log("static const struct afb_verb_v3 _afb_verbs_" + ctools.id(vars['api']) + "[] =");
+console.log("{");
+forEachVerb(function(n) {
+   console.log("   {");
+   console.log("      .verb = " + ctools.string(n.name) + ",");
+   console.log("      .callback = " + funOfVerb(n.name) + ",");
+   console.log("      .info = " + ctools.stringNull(n.nodeAt(['description'])) + ",");
+   console.log("      .auth = NULL,");
+   console.log("      .vcbdata = NULL,");
+   console.log("      .session = 0,");
+   console.log("      .glob = 0");
+   console.log("   },");
+});
+console.log("   { .verb = NULL, .callback = NULL } /* END OF THE VERB ARRAY */");
+console.log("};");
+console.log("");
+   
