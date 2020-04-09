@@ -43,6 +43,7 @@ verbs:
             success:
                 schema: $/schemas/none
                 triggers: start-listening
+            _: fails if event is invalid
 
     unsubscribe:
         description: unsubscribe to gps/gnss events
@@ -51,6 +52,7 @@ verbs:
             success:
                 schema: $/schemas/none
                 triggers: stop-signaling
+            _: fails if event is invalid
 
     location:
         description: get current gps/gnss coordinates
