@@ -2,6 +2,7 @@
 #define _GENUTILS_H_
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,10 +13,15 @@ extern "C" {
 #define str_is_in(value, array)  _str_is_in(value, array, sizeof(array)/sizeof(array[0]))
 
 
-// 0 : value not found i array
-// 1 : value found
-int _str_is_in(const char *value, const char* array[], size_t len);
+// false : value not found in array
+// true : value found...
+bool _str_is_in(const char *value, const char* array[], size_t len);
 
+bool check_pattern(const char* pattern, const char* string);
+
+
+struct afb_api_t;
+extern afb_api_t api;
 
 #ifdef __cplusplus
 extern "C" {
