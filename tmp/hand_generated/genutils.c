@@ -5,18 +5,24 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+#ifndef TEST_UNIT
 #include <afb/afb-binding.h>
-
 afb_api_t api;
+#else
+#define AFB_API_ERROR fprintf
+#define AFB_API_NOTICE fprintf
+#define api stderr
+#endif
 
 bool _str_is_in(const char *value, const char* array[], size_t len) {
     for(size_t i=0; i<len; i++) {
         if (!strncmp(array[i], value, strlen(array[i]))) {
-            return 1; // true
+            return true;
         }
     }
-    return 0; // false
+    return false;
 }
 
 bool check_pattern(const char* pattern, const char* string) {
@@ -36,18 +42,23 @@ bool check_pattern(const char* pattern, const char* string) {
 #ifndef NDEBUG
     if ( ! ((reti == 0) || (reti == REG_NOMATCH))) {
         regerror(reti, &regex, msgbuf, sizeof(msgbuf));
-        /*fprintf(stderr,*/
-        AFB_API_NOTICE(api, "Regex match failed: %s\nThis should never happend, please fix", msgbuf);
+        AFB_API_ERROR(api, "Regex match failed: %s\nThis should never happend, please fix it.", msgbuf);
         abort();
     }
 #endif
+    if (reti == REG_NOMATCH) {
+        AFB_API_NOTICE(api, "Regex pattern verification failure. May this be a bug ? Pattern: '%s', string: '%s'. ", pattern, string);
+    }
     return (reti==0);
 }
 
 /*
  * test code
  *
+ * gcc -DTEST_UNIT -o test_regex genutils.c
+ */
 
+#ifdef TEST_UNIT
 int main(void) {
     char *pattern = "a{3,5}b+c*";
 
@@ -69,4 +80,4 @@ int main(void) {
 
     return 0;
 }
-*/
+#endif

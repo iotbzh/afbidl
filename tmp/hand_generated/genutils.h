@@ -20,8 +20,10 @@ bool _str_is_in(const char *value, const char* array[], size_t len);
 bool check_pattern(const char* pattern, const char* string);
 
 
+#ifndef TEST_UNIT
 struct afb_api_t;
 extern afb_api_t api;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
