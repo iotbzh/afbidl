@@ -6,6 +6,10 @@
 #define AFB_BINDING_VERSION 3
 #include <afb/afb-binding.h>
 
+// TODO : const char* vs char*
+// is it enough if the struct itself is const ?
+// char* stinks malloc()...
+
 // the location
 typedef struct gps_location_s {
     // the altitude in meters above the normal geoide
@@ -63,61 +67,20 @@ typedef struct gps_record_reply_s {
 // error reason is forwarded in verb's reply.
 
 
-int gps_subscribe(const gps_subsription_desc_t * subscription_desc, /*out*/ const char** error_reason);
+int gps_subscribe(const gps_subsription_desc_t * subscription_desc,
+                  /*out*/ const char** error_reason);
 
-int gps_unsubscribe(const gps_subsription_desc_t * subscription_desc, /*out*/ const char** error_reason);
+int gps_unsubscribe(const gps_subsription_desc_t * subscription_desc,
+                    /*out*/ const char** error_reason);
 
-int gps_location(/*out*/gps_location_t * location,  /*out*/ const char ** error_reason);
+int gps_location(/*out*/gps_location_t * location,
+                 /*out*/ const char ** error_reason);
 
-// ====================================================================
+int gps_record(/*in*/const gps_record_request_t * record_request,
+               /*out*/gps_record_reply_t,
+               /*out*/ const char ** error_reason);
 
-int parse_subscription(json_object * request, gps_subsription_desc_t * result, const char ** parse_error);
-json_object * serialize_subscription(gps_subsription_desc_t * subscription_desc);
-
-//int parse_location(json_object * request, gps_location_t * result, const char ** parse_error);
-int serialize_location(const gps_location_t * location, json_object ** result);
-
-
-// Callback for the subscribe verb
-//subscribe to gps/gnss events
-void req_gps_subscribe_cb(afb_req_t request);
-
-// Callback for the unsubscribe verb
-//unsubscribe to gps/gnss events
-void req_gps_unsubscribe_cb(afb_req_t request);
-
-// Callback for the location verb
-//get current gps/gnss coordinates
-void req_gps_location_cb(afb_req_t request);
-
-
-
-/*
-    location:
-        description: get current gps/gnss coordinates
-        request: $/schemas/none
-        reply:
-            success:
-                schema: $/schemas/location
-            _: An error can be returned when the service isn't ready
-
-    record:
-        description: |
-            Entering *record* mode you must send **{"state": "on"}** with the **record**
-            verb which will have a JSON response of **{"filename": "gps_YYYYMMDD_hhmm.log"}**
-            pointing to log under *app-data/agl-service-gps*
-
-            Now to enter *replaying* mode you must symlink or copy a GPS dump to
-            *app-data/agl-service-gps/recording.log* and restart the service.
-            From then on out the previously recorded GPS data will loop infinitely
-            which is useful for testing or demonstration purposes.
-        request: $/schemas/record/request
-        reply:
-            success:
-                schema: $/schemas/record/reply
-                triggers: start-recording
-            _: An error can be returned when the service isn't ready
-*/
-
+// special function called at binfding init
+void gps_user_init((afb_api_t api);
 
 #endif /*_GPS_BINDING_SKELETON_H_*/

@@ -59,3 +59,8 @@ int gps_location(/*out*/gps_location_t * location,  /*out*/ const char ** error_
     fill_timestamp(currtime);
     location->timestamp = currtime; // /!\ NOT THREAD SAFE
 }
+
+
+void gps_user_init((afb_api_t api) {
+    AFB_API_NOTICE(api,"GPS API gps_user_init() : do nothing !");
+}
