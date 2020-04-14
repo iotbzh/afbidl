@@ -22,7 +22,7 @@ bool check_pattern(const char* pattern, const char* string);
 
 #ifndef TEST_UNIT
 struct afb_api_t;
-extern afb_api_t api;
+extern afb_api_t the_api;
 #endif
 
 #ifdef __cplusplus

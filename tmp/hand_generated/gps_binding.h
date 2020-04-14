@@ -77,10 +77,10 @@ int gps_location(/*out*/gps_location_t * location,
                  /*out*/ const char ** error_reason);
 
 int gps_record(/*in*/const gps_record_request_t * record_request,
-               /*out*/gps_record_reply_t,
+               /*out*/gps_record_reply_t * record_reply,
                /*out*/ const char ** error_reason);
 
 // special function called at binfding init
-void gps_user_init((afb_api_t api);
+int gps_user_init(afb_api_t api);
 
 #endif /*_GPS_BINDING_SKELETON_H_*/

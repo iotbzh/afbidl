@@ -74,7 +74,8 @@ static int serialize_location(const gps_location_t * location, json_object ** re
         return 2;
     if (!location->timestamp)
         return 3;
-    // TODO : check rational exp match
+    if (!check_pattern("\\d{4,}-[01][0-9]-[0-3][0-9]T[012][0-9]:[0-5][0-9]:[0-5][0-9].*", location->timestamp))
+        return 4;
     *result = json_object_new_object();
     json_object_object_add(*result,
                            "altitude",
@@ -135,14 +136,14 @@ static int parse_record_request(json_object *request, gps_record_request_t *resu
 }
 
 
-static int serialize_record_reply(gps_record_request_t * record_reply, json_object ** result) {
+static int serialize_record_reply(gps_record_reply_t * record_reply, json_object ** result) {
     if (!result)
         return 1;
     if (!record_reply)
         return 2;
     if (!record_reply->filename)
         return 3;
-    if (!check_pattern("gps_\d{4}\d{2}\d{2}_\d{2}\d{2}.log", record_reply->filename))
+    if (!check_pattern("gps_\\d{4}\\d{2}\\d{2}_\\d{2}\\d{2}.log", record_reply->filename))
         return 4;
 
     *result = json_object_new_object();
@@ -163,7 +164,7 @@ static void req_gps_subscribe_cb(afb_req_t request) {
     const char * req_gps_subscribe_error_reason = NULL;
     gps_subsription_desc_t gps_subsription_desc;
 
-    if (parse_subscription(req, &gps_subsription_desc, &req_gps_subscribe_error_reason) == 0) {
+    if (parse_subscription_desc(req, &gps_subsription_desc, &req_gps_subscribe_error_reason) == 0) {
         if (gps_subscribe(&gps_subsription_desc, &req_gps_subscribe_error_reason) == 0) {
             afb_req_success(request, NULL, NULL);
         }
@@ -178,7 +179,7 @@ static void req_gps_unsubscribe_cb(afb_req_t request) {
     const char * req_gps_unsubscribe_error_reason = NULL;
     gps_subsription_desc_t gps_subsription_desc;
 
-    if (parse_subscription(req, &gps_subsription_desc, &req_gps_unsubscribe_error_reason) == 0) {
+    if (parse_subscription_desc(req, &gps_subsription_desc, &req_gps_unsubscribe_error_reason) == 0) {
         if (gps_unsubscribe(&gps_subsription_desc, &req_gps_unsubscribe_error_reason) == 0) {
             afb_req_success(request, NULL, NULL);
         }
@@ -199,38 +200,49 @@ static void req_gps_location_cb(afb_req_t request) {
     gps_location_t location;
     const char * req_gps_location_error_reason = NULL;
     if (gps_location(&location, &req_gps_location_error_reason) == 0) {
-
+        json_object * jresp = NULL;
+        if (serialize_location(&location, &jresp)) {
+            afb_req_success(request, jresp, NULL);
+            return;
+        } else {
+            req_gps_location_error_reason = "ERROR : could not serialize location";
+        }
     }
 
-    afb_req_fail(request, "failed", req_gps_unsubscribe_error_reason);
+    afb_req_fail(request, "failed", req_gps_location_error_reason);
 }
 
 
-static void req_gps_record_cb((afb_req_t request) {
+static void req_gps_record_cb(afb_req_t request) {
     struct json_object * req = afb_req_json(request);
-    const char * req_gps_unsubscribe_error_reason = NULL;
+    const char * req_gps_record_error_reason = NULL;
     gps_record_request_t record_request;
     gps_record_reply_t record_reply;
 
     if (parse_record_request(req,
-                           &record_request,
-                           &req_gps_unsubscribe_error_reason) == 0) {
-        if (gps_record(&gps_subsription_desc,
-                            &record_reply,
-                            &req_gps_unsubscribe_error_reason) == 0) {
-            json_object * jresp = serialize_record_reply(&record_reply);
-            afb_req_success(request, jresp, NULL);
+                             &record_request,
+                             &req_gps_record_error_reason) == 0) {
+        if (gps_record(&record_request,
+                       &record_reply,
+                       &req_gps_record_error_reason) == 0) {
+            json_object * jresp = NULL;
+            if (serialize_record_reply(&record_reply, &jresp)) {
+                afb_req_success(request, jresp, NULL);
+                return;
+            } else {
+                req_gps_record_error_reason = "ERROR : could not serialize record/reply";
+            }
         }
     }
 
-    afb_req_fail(request, "failed", req_gps_unsubscribe_error_reason);
+    afb_req_fail(request, "failed", req_gps_record_error_reason);
 }
 
 
 static int init(afb_api_t api)
 {
-    int ret;
     location_event = afb_daemon_make_event("location");
+    the_api = api;
 
     return gps_user_init(api);
 }

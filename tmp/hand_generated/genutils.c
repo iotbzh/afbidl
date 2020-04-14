@@ -9,11 +9,11 @@
 
 #ifndef TEST_UNIT
 #include <afb/afb-binding.h>
-afb_api_t api;
+afb_api_t the_api;
 #else
 #define AFB_API_ERROR fprintf
 #define AFB_API_NOTICE fprintf
-#define api stderr
+#define the_api stderr
 #endif
 
 bool _str_is_in(const char *value, const char* array[], size_t len) {
@@ -42,12 +42,12 @@ bool check_pattern(const char* pattern, const char* string) {
 #ifndef NDEBUG
     if ( ! ((reti == 0) || (reti == REG_NOMATCH))) {
         regerror(reti, &regex, msgbuf, sizeof(msgbuf));
-        AFB_API_ERROR(api, "Regex match failed: %s\nThis should never happend, please fix it.", msgbuf);
+        AFB_API_ERROR(the_api, "Regex match failed: %s\nThis should never happend, please fix it.", msgbuf);
         abort();
     }
 #endif
     if (reti == REG_NOMATCH) {
-        AFB_API_NOTICE(api, "Regex pattern verification failure. May this be a bug ? Pattern: '%s', string: '%s'. ", pattern, string);
+        AFB_API_NOTICE(the_api, "Regex pattern verification failure. May this be a bug ? Pattern: '%s', string: '%s'. ", pattern, string);
     }
     return (reti==0);
 }
