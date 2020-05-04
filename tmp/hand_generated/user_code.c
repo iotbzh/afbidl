@@ -3,6 +3,9 @@
 #include <sys/time.h> /* for gettimeofday */
 #include "gps_binding.h"
 
+
+// TODO : record/filname is gps_<timestamp>.log, not ONLY timestamp !
+
 typedef char timestamp_t[29];
 
 
@@ -50,14 +53,14 @@ int gps_unsubscribe(const gps_subsription_desc_t* subscription_desc, /*out*/ con
 }
 
 int gps_location(/*out*/gps_location_t * location,  /*out*/ const char ** error_reason) {
-    static timestamp_t currtime;   // /!\ NOT THREAD SAFE
+    timestamp_t *currtime = malloc(sizeof(timestamp));
     location->altitude = 25.6;
     location->latitude = 47.747678;
     location->longitude = -3.357529;
     location->speed = 0.0;
     location->track = 42.0;
     fill_timestamp(currtime);
-    location->timestamp = currtime; // /!\ NOT THREAD SAFE
+    set_gps_location_timestamp(location, currtime, free);
 }
 
 

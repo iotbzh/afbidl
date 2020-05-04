@@ -4,6 +4,11 @@
 static afb_event_t location_event;
 
 
+typedef struct opaque_req_context_s {
+    void (*location_timestamp_deallocator) (void*);
+} opaque_req_context_t;
+
+
 // *************** MARSHALLING / UNMARSHALLING ********************************
 
 
@@ -67,6 +72,8 @@ int parse_location(json_object * request, gps_location_t * result, const char **
 }
 */
 
+const char *gps_location_timestamp_pattern = "gps_\\d{4,}-[01][0-9]-[0-3][0-9]T[012][0-9]:[0-5][0-9]:[0-5][0-9].*";
+
 static int serialize_location(const gps_location_t * location, json_object ** result) {
     if (!result)
         return 1;
@@ -74,7 +81,7 @@ static int serialize_location(const gps_location_t * location, json_object ** re
         return 2;
     if (!location->timestamp)
         return 3;
-    if (!check_pattern("\\d{4,}-[01][0-9]-[0-3][0-9]T[012][0-9]:[0-5][0-9]:[0-5][0-9].*", location->timestamp))
+    if (!check_pattern(gps_location_timestamp_pattern, location->timestamp))
         return 4;
     *result = json_object_new_object();
     json_object_object_add(*result,
@@ -99,6 +106,17 @@ static int serialize_location(const gps_location_t * location, json_object ** re
     return 0;
 }
 
+
+void set_gps_location_timestamp(afb_req_t req, gps_location_t *location, char *timestamp, void (*deallocator)(void*)) {
+    opaque_req_context_t *context = afb_req_context_get(req);
+
+    if (!context) {
+        context = malloc(sizeof(opaque_req_context_t));
+        afb_req_context_set(req, context, free);
+    }
+
+    context->location_timestamp_deallocator = deallocator;
+}
 
 // record/request and record/reply
 
@@ -136,6 +154,8 @@ static int parse_record_request(json_object *request, gps_record_request_t *resu
 }
 
 
+const char *gps_record_reply_filename_pattern = "gps_\\d{4}\\d{2}\\d{2}_\\d{2}\\d{2}.log"
+
 static int serialize_record_reply(gps_record_reply_t * record_reply, json_object ** result) {
     if (!result)
         return 1;
@@ -143,7 +163,7 @@ static int serialize_record_reply(gps_record_reply_t * record_reply, json_object
         return 2;
     if (!record_reply->filename)
         return 3;
-    if (!check_pattern("gps_\\d{4}\\d{2}\\d{2}_\\d{2}\\d{2}.log", record_reply->filename))
+    if (!check_pattern(gps_record_reply_filename_pattern, record_reply->filename))
         return 4;
 
     *result = json_object_new_object();
@@ -194,7 +214,7 @@ static void req_gps_location_cb(afb_req_t request) {
 
     if (json_object_object_length(afb_req_json(request)) != 0) {
         afb_req_fail(request, "failed", req_gps_location_error_reason_1);
-        return;
+        goto cleaning;
     }
 
     gps_location_t location;
@@ -203,13 +223,21 @@ static void req_gps_location_cb(afb_req_t request) {
         json_object * jresp = NULL;
         if (serialize_location(&location, &jresp)) {
             afb_req_success(request, jresp, NULL);
-            return;
+            goto cleaning;
         } else {
             req_gps_location_error_reason = "ERROR : could not serialize location";
         }
     }
 
     afb_req_fail(request, "failed", req_gps_location_error_reason);
+
+  cleaning:
+    opaque_req_context_t *context = afb_req_context_get(req);
+    if (context) {
+        if (context->location_timestamp_deallocator) {
+            context->location_timestamp_deallocator(location.timestamp);
+        }
+    }
 }
 
 

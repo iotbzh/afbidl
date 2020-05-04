@@ -23,9 +23,12 @@ typedef struct gps_location_s {
     // the heading in degrees
     double track; //[0 .. 360]
     // time stamp of the location as a ISO8601 date
-    const char * timestamp; // \d{4,}-[01][0-9]-[0-3][0-9]T[012][0-9]:[0-5][0-9]:[0-5][0-9].*
+    char * timestamp; // gps_\d{4,}-[01][0-9]-[0-3][0-9]T[012][0-9]:[0-5][0-9]:[0-5][0-9].*
 } gps_location_t;
 
+#define DO_NOT_DEALLOC NULL
+
+void set_gps_location_timestamp(afb_req_t req, gps_location_t *location, char *timestamp, void (*deallocator)(void*));
 
 // TODO: turn this into a hasmap ?
 // Binary search (dichotomy) ? => must be sorted. TBD
@@ -42,19 +45,19 @@ const char *gps_subsription_desc_value_enum[] = {
 
 // Description of the event subscribed or unsubscribed
 typedef struct gps_subsription_desc_s {
-    const char * value;
+    char *value;
 } gps_subsription_desc_t;
 
 const char *gps_record_request_state_enum[] = {
     "on"
 };
 typedef struct gps_record_request_s {
-    const char * state; // "on", mandatory
+    char *state; // "on", mandatory
 } gps_record_request_t;
 
 typedef struct gps_record_reply_s {
     // the name of the file that records the data of format gps_YYYYMMDD_hhmm.log
-    const char* filename; // gps_\d{4}\d{2}\d{2}_\d{2}\d{2}.log, mandatory
+    char *filename; // gps_\d{4}\d{2}\d{2}_\d{2}\d{2}.log, mandatory
 } gps_record_reply_t;
 
 
