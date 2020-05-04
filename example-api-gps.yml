@@ -43,7 +43,6 @@ verbs:
             success:
                 schema: $/schemas/none
                 triggers: start-listening
-            _: fails if event is invalid
 
     unsubscribe:
         description: unsubscribe to gps/gnss events
@@ -52,7 +51,6 @@ verbs:
             success:
                 schema: $/schemas/none
                 triggers: stop-signaling
-            _: fails if event is invalid
 
     location:
         description: get current gps/gnss coordinates
@@ -60,7 +58,8 @@ verbs:
         reply:
             success:
                 schema: $/schemas/location
-            _: An error can be returned when the service isn't ready
+            error: the service isn't ready
+        #asynchronous: true
 
     record:
         description: |
@@ -77,7 +76,7 @@ verbs:
             success:
                 schema: $/schemas/record/reply
                 triggers: start-recording
-            _: An error can be returned when the service isn't ready
+            not_ready: the service isn't ready
 
 events:
     location:
@@ -166,5 +165,4 @@ schemas:
             required: [ filename ]
 
     none:
-        title: no value, just null
-        const: null
+        title: empty schema
