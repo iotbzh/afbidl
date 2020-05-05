@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #ifndef TEST_UNIT
+#define AFB_BINDING_VERSION 3
 #include <afb/afb-binding.h>
 afb_api_t the_api;
 #else
@@ -28,7 +29,6 @@ bool _str_is_in(const char *value, const char* array[], size_t len) {
 bool check_pattern(const char* pattern, const char* string) {
     regex_t regex;
     int reti;
-    char msgbuf[100];
 
     /* Compile regular expression */
     reti = regcomp(&regex, pattern, /*0*/REG_EXTENDED);
@@ -40,15 +40,19 @@ bool check_pattern(const char* pattern, const char* string) {
 
     //assert((reti == 0) || (reti == REG_NOMATCH));
 #ifndef NDEBUG
-    if ( ! ((reti == 0) || (reti == REG_NOMATCH))) {
+    // Debug
+    char msgbuf[100];
+    if ( reti != 0 ) {
         regerror(reti, &regex, msgbuf, sizeof(msgbuf));
-        AFB_API_ERROR(the_api, "Regex match failed: %s\nThis should never happend, please fix it.", msgbuf);
+        AFB_API_ERROR(the_api, "Regex match failed: %s\nThis should never happend, please fix it.\n\tstring : %s\n\tpattern: %s", msgbuf, string, pattern);
         abort();
     }
-#endif
+#else
+    // Release
     if (reti == REG_NOMATCH) {
-        AFB_API_NOTICE(the_api, "Regex pattern verification failure. May this be a bug ? Pattern: '%s', string: '%s'. ", pattern, string);
+        AFB_API_NOTICE(the_api, "Regex pattern verification failure. May this be a bug ? Pattern: '%s', string: '%s'. Error : %s", pattern, string, regerror(reti, &regex, msgbuf, sizeof(msgbuf)));
     }
+#endif
     return (reti==0);
 }
 

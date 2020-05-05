@@ -3,16 +3,32 @@
 
 static afb_event_t location_event;
 
+typedef struct opaque_location_context_s {
+    deallocator_t timestamp_deallocator;
+} opaque_location_context_t;
 
-typedef struct opaque_req_context_s {
-    void (*location_timestamp_deallocator) (void*);
-} opaque_req_context_t;
+typedef struct opaque_record_reply_context_s {
+    deallocator_t filename_deallocator;
+} opaque_record_reply_context_t;
 
+typedef union opaque_context_u {
+    opaque_location_context_t location;
+    opaque_record_reply_context_t record_reply;
+} opaque_context_t;
 
 // *************** MARSHALLING / UNMARSHALLING ********************************
 
 
 // subscription_desc
+
+// TODO: turn this into a hashmap ?
+// Binary search (dichotomy) ? => must be sorted. TBD
+// TODO: generated version SHOULD provide size
+// TODO: extrn forward declaration in the header, definition in .c
+const char *gps_subsription_desc_value_enum[] = {
+    "location"
+};
+
 
 static int parse_subscription_desc(json_object *request, gps_subsription_desc_t *result, const char **parse_error) {
     static const char* parse_subscription_desc_reason_1 = "format request is invalid";
@@ -72,7 +88,7 @@ int parse_location(json_object * request, gps_location_t * result, const char **
 }
 */
 
-const char *gps_location_timestamp_pattern = "gps_\\d{4,}-[01][0-9]-[0-3][0-9]T[012][0-9]:[0-5][0-9]:[0-5][0-9].*";
+const char *gps_location_timestamp_pattern = "gps_\\d{4}-[01][0-9]-[0-3][0-9]T[012][0-9]:[0-5][0-9]:[0-5][0-9].*";
 
 static int serialize_location(const gps_location_t * location, json_object ** result) {
     if (!result)
@@ -108,17 +124,22 @@ static int serialize_location(const gps_location_t * location, json_object ** re
 
 
 void set_gps_location_timestamp(afb_req_t req, gps_location_t *location, char *timestamp, void (*deallocator)(void*)) {
-    opaque_req_context_t *context = afb_req_context_get(req);
+    opaque_context_t *context = afb_req_context_get(req);
 
     if (!context) {
-        context = malloc(sizeof(opaque_req_context_t));
+        context = malloc(sizeof(opaque_context_t));
         afb_req_context_set(req, context, free);
     }
 
-    context->location_timestamp_deallocator = deallocator;
+    context->location.timestamp_deallocator = deallocator;
+    location->timestamp = timestamp;
 }
 
 // record/request and record/reply
+
+const char *gps_record_request_state_enum[] = {
+    "on"
+};
 
 static int parse_record_request(json_object *request, gps_record_request_t *result, const char **parse_error) {
     static const char* parse_record_request_reason_1 = "format request is invalid";
@@ -154,7 +175,8 @@ static int parse_record_request(json_object *request, gps_record_request_t *resu
 }
 
 
-const char *gps_record_reply_filename_pattern = "gps_\\d{4}\\d{2}\\d{2}_\\d{2}\\d{2}.log"
+// const char *gps_record_reply_filename_pattern = "gps_[:digit:]{4}[:digit:]{2}[:digit:]{2}_[:digit:]{2}[:digit:]{2}.log";
+const char *gps_record_reply_filename_pattern =  "gps_[0-9]{4}[0-9]{2}[0-9]{2}_[0-9]{2}[0-9]{2}.log";
 
 static int serialize_record_reply(gps_record_reply_t * record_reply, json_object ** result) {
     if (!result)
@@ -174,6 +196,17 @@ static int serialize_record_reply(gps_record_reply_t * record_reply, json_object
 }
 
 
+void set_gps_record_reply_filename(afb_req_t req, gps_record_reply_t *reply, char *filename, void (*deallocator)(void*)) {
+    opaque_context_t *context = afb_req_context_get(req);
+
+    if (!context) {
+        context = malloc(sizeof(opaque_context_t));
+        afb_req_context_set(req, context, free);
+    }
+
+    context->record_reply.filename_deallocator = deallocator;
+    reply->filename = filename;
+}
 
 
 
@@ -184,10 +217,11 @@ static void req_gps_subscribe_cb(afb_req_t request) {
     const char * req_gps_subscribe_error_reason = NULL;
     gps_subsription_desc_t gps_subsription_desc;
 
-    if (parse_subscription_desc(req, &gps_subsription_desc, &req_gps_subscribe_error_reason) == 0) {
-        if (gps_subscribe(&gps_subsription_desc, &req_gps_subscribe_error_reason) == 0) {
-            afb_req_success(request, NULL, NULL);
-        }
+    if (parse_subscription_desc(req,
+                                &gps_subsription_desc,
+                                &req_gps_subscribe_error_reason) == 0) {
+        gps_subscribe(&gps_subsription_desc);
+        afb_req_success(request, NULL, NULL);
     }
 
     afb_req_fail(request, "failed", req_gps_subscribe_error_reason);
@@ -199,10 +233,11 @@ static void req_gps_unsubscribe_cb(afb_req_t request) {
     const char * req_gps_unsubscribe_error_reason = NULL;
     gps_subsription_desc_t gps_subsription_desc;
 
-    if (parse_subscription_desc(req, &gps_subsription_desc, &req_gps_unsubscribe_error_reason) == 0) {
-        if (gps_unsubscribe(&gps_subsription_desc, &req_gps_unsubscribe_error_reason) == 0) {
-            afb_req_success(request, NULL, NULL);
-        }
+    if (parse_subscription_desc(req,
+                                &gps_subsription_desc,
+                                &req_gps_unsubscribe_error_reason) == 0) {
+        gps_unsubscribe(&gps_subsription_desc);
+        afb_req_success(request, NULL, NULL);
     }
 
     afb_req_fail(request, "failed", req_gps_unsubscribe_error_reason);
@@ -210,16 +245,18 @@ static void req_gps_unsubscribe_cb(afb_req_t request) {
 
 
 static void req_gps_location_cb(afb_req_t request) {
-    static const char* req_gps_location_error_reason_1 = "format request is invalid: Must have no field";
+    static const char* req_gps_location_error_reason_1 = "format request is invalid: Must be empty";
+    opaque_context_t *context = NULL;
 
     if (json_object_object_length(afb_req_json(request)) != 0) {
         afb_req_fail(request, "failed", req_gps_location_error_reason_1);
         goto cleaning;
     }
 
+
     gps_location_t location;
     const char * req_gps_location_error_reason = NULL;
-    if (gps_location(&location, &req_gps_location_error_reason) == 0) {
+    if (gps_location(request, &location) == 0) {
         json_object * jresp = NULL;
         if (serialize_location(&location, &jresp)) {
             afb_req_success(request, jresp, NULL);
@@ -232,10 +269,10 @@ static void req_gps_location_cb(afb_req_t request) {
     afb_req_fail(request, "failed", req_gps_location_error_reason);
 
   cleaning:
-    opaque_req_context_t *context = afb_req_context_get(req);
+    context = afb_req_context_get(request);
     if (context) {
-        if (context->location_timestamp_deallocator) {
-            context->location_timestamp_deallocator(location.timestamp);
+        if (context->location.timestamp_deallocator) {
+            context->location.timestamp_deallocator(location.timestamp);
         }
     }
 }
@@ -246,28 +283,40 @@ static void req_gps_record_cb(afb_req_t request) {
     const char * req_gps_record_error_reason = NULL;
     gps_record_request_t record_request;
     gps_record_reply_t record_reply;
+    opaque_context_t *context = NULL;
 
     if (parse_record_request(req,
                              &record_request,
                              &req_gps_record_error_reason) == 0) {
-        if (gps_record(&record_request,
-                       &record_reply,
-                       &req_gps_record_error_reason) == 0) {
+        if (gps_record(request,
+                       &record_request,
+                       &record_reply) == 0) {
             json_object * jresp = NULL;
-            if (serialize_record_reply(&record_reply, &jresp)) {
+            int rc = -1;
+            if (serialize_record_reply(&record_reply, &jresp) == 0) {
                 afb_req_success(request, jresp, NULL);
-                return;
+                goto cleaning;
             } else {
+                printf("Serialisation error :%d\n", rc);
                 req_gps_record_error_reason = "ERROR : could not serialize record/reply";
             }
         }
     }
 
     afb_req_fail(request, "failed", req_gps_record_error_reason);
+
+  cleaning:
+    context = afb_req_context_get(request);
+    if (context) {
+        if (context->record_reply.filename_deallocator) {
+            context->record_reply.filename_deallocator(record_reply.filename);
+        }
+    }
 }
 
+extern afb_api_t the_api;
 
-static int init(afb_api_t api)
+static int gps_init(afb_api_t api)
 {
     location_event = afb_daemon_make_event("location");
     the_api = api;
@@ -278,7 +327,7 @@ static int init(afb_api_t api)
 // Binder's definition.
 
 
-static const struct afb_verb_v3 binding_verbs[] = {
+static const struct afb_verb_v3 gps_binding_verbs[] = {
     { .verb = "location",    .callback = req_gps_location_cb,     .info = "Get GNSS data" },
     { .verb = "record",      .callback = req_gps_record_cb,       .info = "Record GPS data" },
     { .verb = "subscribe",   .callback = req_gps_subscribe_cb,    .info = "Subscribe to GNSS events" },
@@ -292,6 +341,6 @@ static const struct afb_verb_v3 binding_verbs[] = {
 const struct afb_binding_v3 afbBindingV3 = {
     .api = "gps",
     .specification = "GNSS/GPS API",
-    .verbs = binding_verbs,
-    .init = init,
+    .verbs = gps_binding_verbs,
+    .init = gps_init,
 };

@@ -26,17 +26,14 @@ typedef struct gps_location_s {
     char * timestamp; // gps_\d{4,}-[01][0-9]-[0-3][0-9]T[012][0-9]:[0-5][0-9]:[0-5][0-9].*
 } gps_location_t;
 
-#define DO_NOT_DEALLOC NULL
 
-void set_gps_location_timestamp(afb_req_t req, gps_location_t *location, char *timestamp, void (*deallocator)(void*));
 
-// TODO: turn this into a hasmap ?
-// Binary search (dichotomy) ? => must be sorted. TBD
-// TODO: generated version SHOULD provide size
-// TODO: extrn forward declaration in the header, definition in .c
-const char *gps_subsription_desc_value_enum[] = {
-    "location"
-};
+typedef void (*deallocator_t)(void*);
+// special value for deallocator_t
+#define NO_DEALLOCATOR (void(*0)(void))
+
+void set_gps_location_timestamp(afb_req_t req, gps_location_t *location, char *timestamp, deallocator_t deallocator);
+
 
 /*****************************************************************
  * NOTE : the 'value' in gps_subsription_desc_t points to one of *
@@ -45,20 +42,20 @@ const char *gps_subsription_desc_value_enum[] = {
 
 // Description of the event subscribed or unsubscribed
 typedef struct gps_subsription_desc_s {
-    char *value;
+    const char *value;
 } gps_subsription_desc_t;
 
-const char *gps_record_request_state_enum[] = {
-    "on"
-};
 typedef struct gps_record_request_s {
-    char *state; // "on", mandatory
+    const char *state; // "on", mandatory
 } gps_record_request_t;
 
 typedef struct gps_record_reply_s {
     // the name of the file that records the data of format gps_YYYYMMDD_hhmm.log
     char *filename; // gps_\d{4}\d{2}\d{2}_\d{2}\d{2}.log, mandatory
 } gps_record_reply_t;
+
+
+void set_gps_record_reply_filename(afb_req_t req, gps_record_reply_t *reply, char *filename, void (*deallocator)(void*));
 
 
 
@@ -70,18 +67,26 @@ typedef struct gps_record_reply_s {
 // error reason is forwarded in verb's reply.
 
 
-int gps_subscribe(const gps_subsription_desc_t * subscription_desc,
-                  /*out*/ const char** error_reason);
+void gps_subscribe(const gps_subsription_desc_t * subscription_desc);
 
-int gps_unsubscribe(const gps_subsription_desc_t * subscription_desc,
-                    /*out*/ const char** error_reason);
+void gps_unsubscribe(const gps_subsription_desc_t * subscription_desc);
 
-int gps_location(/*out*/gps_location_t * location,
-                 /*out*/ const char ** error_reason);
+typedef enum {
+    gps_location_success = 0,
+    gps_location_error = 1
+} gps_location_returncode_t;
 
-int gps_record(/*in*/const gps_record_request_t * record_request,
-               /*out*/gps_record_reply_t * record_reply,
-               /*out*/ const char ** error_reason);
+int gps_location(afb_req_t request,
+                 /*out*/gps_location_t * location);
+
+typedef enum {
+    gps_record_success = 0,
+    gps_record_not_ready = 1
+} gps_record_returncode_t;
+
+int gps_record(afb_req_t request,
+               /*in*/const gps_record_request_t * record_request,
+               /*out*/gps_record_reply_t * record_reply);
 
 // special function called at binfding init
 int gps_user_init(afb_api_t api);
