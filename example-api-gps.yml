@@ -15,7 +15,6 @@ info:
   homepage: https://doc.automotivelinux.org/...
 
 tools:
-
     afb-genskel:
         scope: static
         prefix: req_
@@ -35,7 +34,6 @@ tools:
           url: userguide.md
 
 verbs:
-
     subscribe:
         description: subscribe to gps/gnss events
         request: $/schemas/subscription-desc
