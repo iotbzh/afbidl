@@ -6,7 +6,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/conf.d/cmake/config.cmake)
 PROJECT_TARGET_ADD(afm-gps-binding)
 
 	# Define project Targets
-	add_library(afm-gps-binding MODULE gps_binding.c)
+	add_library(afm-gps-binding MODULE
+                        gps_binding.c
+                        genutils.c
+                        user_code.c)
 
 	# Binder exposes a unique public entry point
 	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES

@@ -43,7 +43,7 @@ set(PROJECT_CMAKE_CONF_DIR "conf.d")
 
 # Compilation Mode (DEBUG, RELEASE)
 # ----------------------------------
-set(BUILD_TYPE "RELEASE")
+set(BUILD_TYPE "DEBUG")
 
 # Kernel selection if needed. You can choose between a
 # mandatory version to impose a minimal version.
